@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  
+  <title>{{ title or "Admin" }}</title>
+  {% block head_extra %}{% endblock %}
+  <style>
+    body { margin:0; font-family: Arial, sans-serif; }
+    .wrap { display:flex; min-height:100vh; }
+    .side {
+      width: 220px; background:#1f2937; color:white; padding:16px;
+    }
+    .side a { color:white; text-decoration:none; display:block; padding:10px 8px; border-radius:6px; }
+    .side a:hover { background:#374151; }
+    .main { flex:1; padding:24px; background:#f3f4f6; }
+    .top { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; }
+    .card { background:white; padding:16px; border-radius:10px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="side">
+      <h3>ULLS Admin</h3>
+      <a href="{{ url_for('admin.dashboard') }}">Dashboard</a>
+      <a href="{{ url_for('admin.qr_today') }}">Daily QR</a>
+      <a href="{{ url_for('admin.employees') }}">Employees</a>
+      <a href="{{ url_for('admin.attendance') }}">Attendance</a>
+      <a href="{{ url_for('admin.visitors') }}">Visitors</a>
+      <a href="{{ url_for('admin.logout') }}">Logout</a>
+    </div>
+
+    <div class="main">
+      <div class="top">
+        <h2 style="margin:0;">{{ title or "" }}</h2>
+      </div>
+
+      <div class="card">
+        {% block content %}{% endblock %}
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,53 @@
+{% extends "admin/layout.html" %}
+{% set title = "Edit Employee" %}
+
+
+{% block content %}
+  <form method="post" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+    <div>
+      <label>Employee ID</label><br>
+      <input name="employee_id" value="{{ e.employee_id }}" required>
+    </div>
+
+    <div>
+      <label>Surname</label><br>
+      <input name="surname" value="{{ e.surname }}" required>
+    </div>
+
+    <div>
+      <label>First Name</label><br>
+      <input name="first_name" value="{{ e.first_name }}" required>
+    </div>
+
+    <div>
+      <label>Middle Name</label><br>
+      <input name="middle_name" value="{{ e.middle_name or '' }}">
+    </div>
+
+    <div>
+      <label>Birthday</label><br>
+      <input type="date" name="birthday" value="{{ e.birthday or '' }}">
+    </div>
+
+    <div>
+      <label>Position</label><br>
+      <input name="position" value="{{ e.position or '' }}">
+    </div>
+
+    <div>
+      <label>Status</label><br>
+      <select name="status">
+        <option value="active"  {% if e.status=='active' %}selected{% endif %}>active</option>
+        <option value="away"    {% if e.status=='away' %}selected{% endif %}>away</option>
+        <option value="on_leave"{% if e.status=='on_leave' %}selected{% endif %}>on_leave</option>
+      </select>
+    </div>
+
+    <button type="submit">Save</button>
+    <a href="{{ url_for('admin.employees') }}">Cancel</a>
+  </form>
+
+  {% if error %}
+    <p style="color:red; margin-top:12px;">{{ error }}</p>
+  {% endif %}
+{% endblock %}

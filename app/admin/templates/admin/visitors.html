@@ -1,0 +1,66 @@
+{% extends "admin/layout.html" %}
+{% set title = "Visitor Log" %}
+
+{% block content %}
+
+{% set ns = namespace(current_day=None) %}
+
+{% for v in visitors %}
+  {% set day_label = v.time_in.strftime("%B %d, %Y") if v.time_in else "Unknown Date" %}
+
+  {# start a new day group #}
+  {% if ns.current_day != day_label %}
+    {% if ns.current_day is not none %}
+      </tbody>
+      </table>
+      <br>
+    {% endif %}
+
+    <h3 style="margin:16px 0 8px 0;">{{ day_label }}</h3>
+
+    <table border="1" cellpadding="8" cellspacing="0" style="background:white; width:100%;">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Contact</th>
+          <th>Purpose</th>
+          <th>Time In</th>
+          <th>Time Out</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+
+    {% set ns.current_day = day_label %}
+  {% endif %}
+
+  <tr>
+    <td>{{ v.id }}</td>
+    <td>{{ v.full_name }}</td>
+    <td>{{ v.contact or "" }}</td>
+    <td>{{ v.purpose or "" }}</td>
+    <td>{{ v.time_in.strftime("%I:%M %p") if v.time_in else "" }}</td>
+    <td>{{ v.time_out.strftime("%I:%M %p") if v.time_out else "" }}</td>
+    <td>
+      {% if not v.time_out %}
+        <form method="post" action="{{ url_for('admin.visitor_timeout', visitor_id=v.id) }}" style="display:inline;">
+          <button type="submit">Time Out</button>
+        </form>
+      {% else %}
+        -
+      {% endif %}
+    </td>
+  </tr>
+
+{% endfor %}
+
+{# close last table if there were any visitors #}
+{% if visitors %}
+  </tbody>
+  </table>
+{% else %}
+  <p>No visitors found for the selected filter.</p>
+{% endif %}
+
+{% endblock %}

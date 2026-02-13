@@ -1,0 +1,65 @@
+{% extends "employee/layout.html" %}
+{% set title = "Employee Dashboard" %}
+
+{% block head_extra %}
+<meta http-equiv="refresh" content="5">
+{% endblock %}
+
+{% block content %}
+
+<b>Date:</b> {{ today|mdY }}
+
+<p style="margin-top:8px;">
+    <a href="{{ url_for('employee.dashboard', range='today') }}">Today</a> |
+    <a href="{{ url_for('employee.dashboard', range='week') }}">This Week</a> |
+    <a href="{{ url_for('employee.dashboard', range='month') }}">This Month</a>
+</p>
+
+<p><b>Showing:</b> {{ start|mdY }} to {{ end|mdY }}</p>
+
+<h3>Stats</h3>
+<ul>
+    <li>Total employees: {{ total_employees }}</li>
+    <li>Logged employees: {{ logged_employees }}</li>
+    <li>Late employees (after 8:00 AM): {{ late_employees }}</li>
+</ul>
+
+<h3>Logs</h3>
+<table border="1" cellpadding="8" cellspacing="0" style="background:white; width:100%;">
+    <tr>
+        <th>Employee</th>
+        <th>AM In</th>
+        <th>Lunch Out</th>
+        <th>Lunch In</th>
+        <th>PM Out</th>
+        <th>Late?</th>
+    </tr>
+
+    {% for r in records %}
+    <tr {% if latest_id and r.id==latest_id %} style="background:#d1fae5;" {% endif %}>
+        <td>{{ r.employee.surname }}, {{ r.employee.first_name }}</td>
+        <td>{{ r.am_in.strftime("%I:%M %p") if r.am_in else "" }}</td>
+        <td>{{ r.lunch_out.strftime("%I:%M %p") if r.lunch_out else "" }}</td>
+        <td>{{ r.lunch_in.strftime("%I:%M %p") if r.lunch_in else "" }}</td>
+        <td>{{ r.pm_out.strftime("%I:%M %p") if r.pm_out else "" }}</td>
+
+        <td>
+            {% if r.am_in and r.am_in > late_cutoff %}
+            <b style="color:red;">LATE</b>
+            {% else %}
+            -
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+<h3 style="margin-top:18px;">Attendance QR</h3>
+{% if token %}
+<p>Scan this QR to log attendance for today.</p>
+<img src="{{ url_for('employee.qr_image_public', token=token) }}" alt="Daily QR">
+{% else %}
+<p>No QR generated yet for today. Please ask the admin to generate it.</p>
+{% endif %}
+
+{% endblock %}

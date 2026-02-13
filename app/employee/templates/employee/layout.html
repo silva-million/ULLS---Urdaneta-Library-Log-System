@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ title or "Employee" }}</title>
+  {% block head_extra %}{% endblock %}
+  <style>
+    body { margin:0; font-family: Arial, sans-serif; }
+    .wrap { display:flex; min-height:100vh; }
+    .side {
+      width: 220px; background:#111827; color:white; padding:16px;
+    }
+    .side a { color:white; text-decoration:none; display:block; padding:10px 8px; border-radius:6px; }
+    .side a:hover { background:#374151; }
+    .main { flex:1; padding:24px; background:#f3f4f6; }
+    .top { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; }
+    .card { background:white; padding:16px; border-radius:10px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="side">
+      <h3 style="margin-top:0;">ULLS Employee</h3>
+
+      <a href="{{ url_for('employee.dashboard', range='today') }}">Dashboard</a>
+      <a href="{{ url_for('employee.my_attendance') }}">My Attendance</a>
+    </div>
+
+    <div class="main">
+      <div class="top">
+        <h2 style="margin:0;">{{ title or "" }}</h2>
+      </div>
+
+      <div class="card">
+        {% block content %}{% endblock %}
+      </div>
+    </div>
+  </div>
+</body>
+</html>

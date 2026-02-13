@@ -1,0 +1,76 @@
+{% extends "admin/layout.html" %}
+{% set title = "Dashboard" %}
+
+{% block content %}
+<b>Date:</b> {{ today|mdY }}
+
+<div style="display:flex; gap:12px; flex-wrap:wrap; margin:12px 0;">
+  <div class="card" style="min-width:180px;">
+    <b>Total Employees</b><br>
+    <span style="font-size:26px;">{{ total_employees }}</span>
+  </div>
+  <div class="card" style="min-width:180px;">
+    <b>Logged Today</b><br>
+    <span style="font-size:26px;">{{ logged_today }}</span>
+  </div>
+  <div class="card" style="min-width:180px;">
+    <b>Late Today</b><br>
+    <span style="font-size:26px;">{{ late_today }}</span>
+  </div>
+  <div class="card" style="min-width:180px;">
+    <b>Visitors Today</b><br>
+    <span style="font-size:26px;">{{ visitors_today_count }}</span>
+  </div>
+</div>
+
+<h3>Employee Logs Today</h3>
+<table border="1" cellpadding="8" cellspacing="0" style="background:white; width:100%; margin-bottom:18px;">
+  <tr>
+    <th>Employee</th>
+    <th>Late?</th>
+    <th>AM In</th>
+    <th>Lunch Out</th>
+    <th>Lunch In</th>
+    <th>PM Out</th>
+    <th>Total</th>
+    <th>OT</th>
+  </tr>
+  {% for r in records %}
+  <tr>
+    <td>{{ r.employee.surname }}, {{ r.employee.first_name }}</td>
+    <td>
+      {% if r.am_in and r.am_in > late_cutoff %}
+      <b style="color:red;">LATE</b>
+      {% else %}-{% endif %}
+    </td>
+    <td>{{ r.am_in.strftime("%I:%M %p") if r.am_in else "" }}</td>
+    <td>{{ r.lunch_out.strftime("%I:%M %p") if r.lunch_out else "" }}</td>
+    <td>{{ r.lunch_in.strftime("%I:%M %p") if r.lunch_in else "" }}</td>
+    <td>{{ r.pm_out.strftime("%I:%M %p") if r.pm_out else "" }}</td>
+
+    <td>{{ "%.2f"|format(r.total_minutes/60) }}</td>
+    <td>{{ "%.2f"|format(r.overtime_minutes/60) }}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+<h3>Visitors Today</h3>
+<table border="1" cellpadding="8" cellspacing="0" style="background:white; width:100%;">
+  <tr>
+    <th>Name</th>
+    <th>Contact</th>
+    <th>Purpose</th>
+    <th>Time In</th>
+    <th>Time Out</th>
+  </tr>
+  {% for v in visitors %}
+  <tr>
+    <td>{{ v.full_name }}</td>
+    <td>{{ v.contact or "" }}</td>
+    <td>{{ v.purpose or "" }}</td>
+    <td>{{ v.time_in|mdY_time }}</td>
+    <td>{{ v.time_out|mdY_time }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

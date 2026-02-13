@@ -1,0 +1,19 @@
+{% extends "admin/layout.html" %}
+{% set title = "Daily QR" %}
+
+
+{% block content %}
+  <p><b>Date:</b> {{ day }}</p>
+
+  <form method="post">
+    <button type="submit">Generate / Refresh QR for Today</button>
+  </form>
+
+  {% if token %}
+    <p style="margin-top:12px;"><b>Token:</b> {{ token }}</p>
+    <p><b>Scan URL:</b> {{ scan_url }}</p>
+    <img src="{{ url_for('admin.qr_image', token=token) }}" alt="QR Code">
+  {% else %}
+    <p style="margin-top:12px;">No QR generated yet for today.</p>
+  {% endif %}
+{% endblock %}

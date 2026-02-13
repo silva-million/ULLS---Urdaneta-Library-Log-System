@@ -1,0 +1,20 @@
+{% extends "employee/layout.html" %}
+{% set title = "Scan Attendance" %}
+
+{% block content %}
+  {% if error %}<p style="color:red;">{{ error }}</p>{% endif %}
+  {% if msg %}<p style="color:green;">{{ msg }}</p>{% endif %}
+
+  {% if ok %}
+    <form method="post" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+      <input type="hidden" name="token" value="{{ token }}">
+
+      <div>
+        <label>Employee ID</label><br>
+        <input name="employee_id" placeholder="e.g. 2024-001" required>
+      </div>
+
+      <button type="submit">Submit</button>
+    </form>
+  {% endif %}
+{% endblock %}

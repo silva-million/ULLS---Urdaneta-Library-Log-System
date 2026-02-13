@@ -1,0 +1,54 @@
+{% extends "admin/layout.html" %}
+{% set title = "Employee Attendance" %}
+
+{% block content %}
+<p><b>{{ emp.surname }}, {{ emp.first_name }}</b> ({{ emp.employee_id }})</p>
+
+<form method="get" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin:12px 0;">
+    <div>
+        <label>From</label><br>
+        <input type="date" name="from" value="{{ from_date or '' }}">
+    </div>
+    <div>
+        <label>To</label><br>
+        <input type="date" name="to" value="{{ to_date or '' }}">
+    </div>
+
+    <button type="submit">Apply</button>
+
+    <button type="submit" formaction="{{ url_for('admin.employee_attendance_export_excel', emp_id=emp.id) }}"
+        formmethod="get">
+        Export Excel
+    </button>
+
+    <button type="submit" formaction="{{ url_for('admin.employee_attendance_export_pdf', emp_id=emp.id) }}"
+        formmethod="get">
+        Export PDF
+    </button>
+
+    <a href="{{ url_for('admin.employees') }}">Back to Employees</a>
+</form>
+
+<table border="1" cellpadding="8" cellspacing="0" style="background:white; width:100%;">
+    <tr>
+        <th>Date</th>
+        <th>AM In</th>
+        <th>Lunch Out</th>
+        <th>Lunch In</th>
+        <th>PM Out</th>
+        <th>Total</th>
+        <th>OT</th>
+    </tr>
+    {% for r in records %}
+    <tr>
+        <td>{{ r.day|mdY }}</td>
+        <td>{{ r.am_in.strftime("%I:%M %p") if r.am_in else "" }}</td>
+        <td>{{ r.lunch_out.strftime("%I:%M %p") if r.lunch_out else "" }}</td>
+        <td>{{ r.lunch_in.strftime("%I:%M %p") if r.lunch_in else "" }}</td>
+        <td>{{ r.pm_out.strftime("%I:%M %p") if r.pm_out else "" }}</td>
+        <td>{{ "%.2f"|format(r.total_minutes/60) }}</td>
+        <td>{{ "%.2f"|format(r.overtime_minutes/60) }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

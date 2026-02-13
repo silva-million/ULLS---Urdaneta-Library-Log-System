@@ -1,0 +1,64 @@
+{% extends "employee/layout.html" %}
+{% set title = "My Attendance" %}
+
+{% block content %}
+
+  <form method="get" action="{{ url_for('employee.my_attendance') }}"
+        style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+    <div>
+      <label>Employee ID</label><br>
+      <input name="employee_id" value="{{ employee_id or '' }}" required>
+    </div>
+    <div>
+      <label>From</label><br>
+      <input type="date" name="from" value="{{ from_date or '' }}">
+    </div>
+    <div>
+      <label>To</label><br>
+      <input type="date" name="to" value="{{ to_date or '' }}">
+    </div>
+
+    <button type="submit">View</button>
+
+    {% if employee_id and records is not none %}
+      <a href="{{ url_for('employee.my_attendance_export_excel', employee_id=employee_id, **{'from': from_date, 'to': to_date}) }}">
+        Export Excel
+      </a>
+      |
+      <a href="{{ url_for('employee.my_attendance_export_pdf', employee_id=employee_id, **{'from': from_date, 'to': to_date}) }}">
+        Export PDF
+      </a>
+    {% endif %}
+  </form>
+
+  {% if error %}
+    <p style="color:red; margin-top:10px;">{{ error }}</p>
+  {% endif %}
+
+  {% if records %}
+    <table border="1" cellpadding="8" cellspacing="0"
+           style="margin-top:14px; background:white; width:100%;">
+      <tr>
+        <th>Date</th>
+        <th>AM In</th>
+        <th>Lunch Out</th>
+        <th>Lunch In</th>
+        <th>PM Out</th>
+        <th>Total</th>
+        <th>OT</th>
+      </tr>
+      {% for r in records %}
+      <tr>
+        <td>{{ r.day }}</td>
+        <td>{{ r.am_in or "" }}</td>
+        <td>{{ r.lunch_out or "" }}</td>
+        <td>{{ r.lunch_in or "" }}</td>
+        <td>{{ r.pm_out or "" }}</td>
+        <td>{{ "%.2f"|format(r.total_minutes/60) }}</td>
+        <td>{{ "%.2f"|format(r.overtime_minutes/60) }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  {% endif %}
+
+{% endblock %}
