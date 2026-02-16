@@ -81,7 +81,7 @@ def login():
             return redirect(url_for("admin.dashboard"))
         error = "Invalid username/password"
 
-    return render_template("admin/login.html", error=error)
+    return render_template("admin/login.html", error=error, date=date)
 
 #DASHBOARD ROUTE
 @admin_bp.route("/dashboard")
