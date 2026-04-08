@@ -3,64 +3,136 @@
 
 {% block content %}
 
-{% set ns = namespace(current_day=None) %}
+<!-- Controls -->
+<div class="section-card att-top">
+  <div class="section-head">
+    <h3>Visitor Log</h3>
+    <span class="badge">{{ visitors|length }} record{{ '' if visitors|length == 1 else 's' }}</span>
+  </div>
 
-{% for v in visitors %}
-  {% set day_label = v.time_in.strftime("%B %d, %Y") if v.time_in else "Unknown Date" %}
+  <form method="get" class="att-filter-compact">
+    <div class="f">
+      <label>From</label>
+      <input class="inp" type="date" name="from" value="{{ from_date or '' }}">
+    </div>
 
-  {# start a new day group #}
-  {% if ns.current_day != day_label %}
-    {% if ns.current_day is not none %}
-      </tbody>
-      </table>
-      <br>
+    <div class="f">
+      <label>To</label>
+      <input class="inp" type="date" name="to" value="{{ to_date or '' }}">
+    </div>
+
+    <div class="f">
+      <label>&nbsp;</label>
+      <button class="btn btn-primary" type="submit">Apply</button>
+    </div>
+
+    <div class="att-filter-actions">
+      <a class="btn btn-soft" href="{{ url_for('admin.visitors', range='today') }}">Today</a>
+      <a class="btn btn-soft" href="{{ url_for('admin.visitors', range='week') }}">This Week</a>
+      <a class="btn btn-soft" href="{{ url_for('admin.visitors', range='month') }}">This Month</a>
+      <a class="btn btn-soft" href="{{ url_for('admin.visitors_monthly_report') }}">Monthly Report</a>
+
+      <button class="btn btn-soft"
+              type="submit"
+              formaction="{{ url_for('admin.visitors_export_excel') }}"
+              formmethod="get">
+        Export Excel
+      </button>
+
+      <button class="btn btn-soft"
+              type="submit"
+              formaction="{{ url_for('admin.visitors_export_pdf') }}"
+              formmethod="get">
+        Export PDF
+      </button>
+    </div>
+  </form>
+
+  <div class="emp-sub" style="margin-top:10px;">
+    Tip: Use Today/Week/Month for quick filters, or From/To for custom range.
+  </div>
+</div>
+
+{% if visitors %}
+  {% set ns = namespace(current_day=None) %}
+
+  {% for v in visitors %}
+    {% set day_label = v.time_in.strftime("%B %d, %Y") if v.time_in else "Unknown Date" %}
+
+    {% if ns.current_day != day_label %}
+      {% if ns.current_day is not none %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="section-card">
+        <div class="section-head">
+          <h3>{{ day_label }}</h3>
+          <span class="badge">Daily Log</span>
+        </div>
+
+        <div class="table-wrap">
+          <table class="table emp-table">
+            <thead>
+              <tr>
+                <th style="width:80px;">ID</th>
+                <th>Name</th>
+                <th>Contact</th>
+                <th>Purpose</th>
+                <th style="width:110px;">Time In</th>
+                <th style="width:110px;">Time Out</th>
+                <th style="width:160px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+
+      {% set ns.current_day = day_label %}
     {% endif %}
 
-    <h3 style="margin:16px 0 8px 0;">{{ day_label }}</h3>
+    <tr>
+      <td><span class="mono">{{ v.id }}</span></td>
+      <td style="font-weight:800; color:rgba(0,0,0,.74);">{{ v.full_name }}</td>
+      <td>{{ v.contact or "—" }}</td>
+      <td>{{ v.purpose or "—" }}</td>
 
-    <table border="1" cellpadding="8" cellspacing="0" style="background:white; width:100%;">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Name</th>
-          <th>Contact</th>
-          <th>Purpose</th>
-          <th>Time In</th>
-          <th>Time Out</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
+      <td style="white-space:nowrap;">
+        {{ v.time_in.strftime("%I:%M %p") if v.time_in else "—" }}
+      </td>
 
-    {% set ns.current_day = day_label %}
-  {% endif %}
+      <td style="white-space:nowrap;">
+        {{ v.time_out.strftime("%I:%M %p") if v.time_out else "—" }}
+      </td>
 
-  <tr>
-    <td>{{ v.id }}</td>
-    <td>{{ v.full_name }}</td>
-    <td>{{ v.contact or "" }}</td>
-    <td>{{ v.purpose or "" }}</td>
-    <td>{{ v.time_in.strftime("%I:%M %p") if v.time_in else "" }}</td>
-    <td>{{ v.time_out.strftime("%I:%M %p") if v.time_out else "" }}</td>
-    <td>
-      {% if not v.time_out %}
-        <form method="post" action="{{ url_for('admin.visitor_timeout', visitor_id=v.id) }}" style="display:inline;">
-          <button type="submit">Time Out</button>
-        </form>
-      {% else %}
-        -
-      {% endif %}
-    </td>
-  </tr>
+      <td class="action-row">
+        {% if not v.time_out %}
+          <form method="post" action="{{ url_for('admin.visitor_timeout', visitor_id=v.id) }}" style="display:inline;">
+            <button class="btn btn-mini btn-warn" type="submit">Time Out</button>
+          </form>
+        {% else %}
+          <span class="chip chip-ok">Done</span>
+        {% endif %}
+      </td>
+    </tr>
 
-{% endfor %}
+  {% endfor %}
 
-{# close last table if there were any visitors #}
-{% if visitors %}
-  </tbody>
-  </table>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
 {% else %}
-  <p>No visitors found for the selected filter.</p>
+  <div class="section-card">
+    <div class="section-head">
+      <h3>No Results</h3>
+      <span class="badge">Try changing filters</span>
+    </div>
+    <div style="color:rgba(0,0,0,.62); font-weight:600;">
+      No visitors found for the selected filter.
+    </div>
+  </div>
 {% endif %}
 
 {% endblock %}

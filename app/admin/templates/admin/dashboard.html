@@ -68,11 +68,12 @@
 
           <td class="center">
             {% if r.am_in and r.am_in > late_cutoff %}
-              <span class="tag-late">LATE</span>
+            <span class="chip chip-danger">Late</span>
             {% else %}
-              -
+            <span class="chip chip-ok">On time</span>
             {% endif %}
           </td>
+
 
           <td>{{ r.am_in.strftime("%I:%M %p") if r.am_in else "" }}</td>
           <td>{{ r.lunch_out.strftime("%I:%M %p") if r.lunch_out else "" }}</td>

@@ -11,6 +11,7 @@ def create_app():
     app.config.from_object(Config)
     os.makedirs(app.instance_path, exist_ok=True)
     
+    
     @app.route("/")
     def landing():
         return render_template("landing.html", date=date)
@@ -33,6 +34,8 @@ def create_app():
     login_manager.init_app(app)
     db.init_app(app)
     migrate.init_app(app, db)
+    with app.app_context():
+        db.create_all()
 
     from .models.user import AdminUser
 

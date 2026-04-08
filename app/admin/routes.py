@@ -38,6 +38,12 @@ def fmt_mdY_time(dt):
         return ""
     return dt.strftime("%B ") + str(dt.day) + dt.strftime(", %Y %I:%M %p")
 
+def fmt_12h(t):
+    """Format a time/datetime to 12-hour like 08:05 AM. Returns '' if None."""
+    if not t:
+        return ""
+    return t.strftime("%I:%M %p")
+
 def employee_export_filter_label(from_raw: str, to_raw: str, month: str):
     """
     Returns a human label that includes formatted dates.
@@ -254,6 +260,7 @@ def attendance():
 
     employees = Employee.query.order_by(Employee.surname.asc()).all()
 
+    # ---- SAVE (POST) ----
     if request.method == "POST":
         emp_id = request.form.get("employee_id", "").strip()
         day_raw = request.form.get("day", "").strip()
@@ -287,25 +294,41 @@ def attendance():
             db.session.commit()
             msg = "Attendance saved ✅"
 
-        # --- filters ---
+    # ---- FILTERS (GET) ----
+    rng = request.args.get("range", "").strip()  # today | week | month
     from_raw = request.args.get("from", "").strip()
     to_raw = request.args.get("to", "").strip()
     month = request.args.get("month", "").strip()
 
+    # IMPORTANT: define q BEFORE using it
     q = Attendance.query
 
-    # month format: YYYY-MM (e.g., 2026-02)
+    # 1) quick range filter (only if no month/from/to provided)
+    if rng and not (month or from_raw or to_raw):
+        today = date.today()
+        if rng == "today":
+            q = q.filter(Attendance.day == today)
+        elif rng == "week":
+            start = today - timedelta(days=today.weekday())  # Monday
+            end = today
+            q = q.filter(Attendance.day >= start, Attendance.day <= end)
+        elif rng == "month":
+            start = today.replace(day=1)
+            end = today
+            q = q.filter(Attendance.day >= start, Attendance.day <= end)
+
+    # 2) month filter
     if month:
         y, m = month.split("-")
         y = int(y); m = int(m)
-        start = datetime(y, m, 1).date()
-        # next month start
+        start = date(y, m, 1)
         if m == 12:
-            end = datetime(y + 1, 1, 1).date()
+            end = date(y + 1, 1, 1)
         else:
-            end = datetime(y, m + 1, 1).date()
+            end = date(y, m + 1, 1)
         q = q.filter(Attendance.day >= start, Attendance.day < end)
 
+    # 3) from/to filters
     if from_raw:
         from_date = datetime.strptime(from_raw, "%Y-%m-%d").date()
         q = q.filter(Attendance.day >= from_date)
@@ -321,7 +344,6 @@ def attendance():
     records = q.order_by(Attendance.day.desc(), Attendance.id.desc()).all()
 
     # Build month dropdown from existing Attendance days
-    # (unique YYYY-MM sorted desc)
     month_rows = db.session.query(Attendance.day).distinct().all()
     month_set = set()
     for (d,) in month_rows:
@@ -329,14 +351,8 @@ def attendance():
             month_set.add((d.year, d.month))
 
     month_list = sorted(month_set, reverse=True)
-
-    months = []
-    for y, m in month_list:
-        months.append({
-            "value": f"{y:04d}-{m:02d}",
-            "label": f"{datetime(y, m, 1).strftime('%B %Y')}"
-        })
-
+    months = [{"value": f"{y:04d}-{m:02d}", "label": datetime(y, m, 1).strftime("%B %Y")}
+              for y, m in month_list]
 
     return render_template(
         "admin/attendance.html",
@@ -348,6 +364,7 @@ def attendance():
         to_date=to_raw,
         month=month,
         months=months,
+        rng=rng,  # optional if you want to highlight active pill
     )
 
 @admin_bp.route("/employees/export/excel", methods=["GET"])
@@ -500,10 +517,10 @@ def attendance_export_excel():
             "Employee ID": r.employee.employee_id,
             "Surname": r.employee.surname,
             "First Name": r.employee.first_name,
-            "AM In": (r.am_in.strftime("%H:%M") if r.am_in else ""),
-            "Lunch Out": (r.lunch_out.strftime("%H:%M") if r.lunch_out else ""),
-            "Lunch In": (r.lunch_in.strftime("%H:%M") if r.lunch_in else ""),
-            "PM Out": (r.pm_out.strftime("%H:%M") if r.pm_out else ""),
+            "AM In": fmt_12h(r.am_in),
+            "Lunch Out": fmt_12h(r.lunch_out),
+            "Lunch In": fmt_12h(r.lunch_in),
+            "PM Out": fmt_12h(r.pm_out),
             "Total Hours": round(r.total_minutes / 60, 2),
             "Overtime Hours": round(r.overtime_minutes / 60, 2),
         })
@@ -571,7 +588,7 @@ def attendance_export_pdf():
     y -= 20
 
     headers = ["Date", "EmpID", "Surname", "First", "AM In", "Lunch Out", "PM In", "PM Out", "Total", "OT"]
-    col_w = [100, 70, 110, 110, 60, 60, 60, 60, 60, 60]
+    col_w = [100, 70, 110, 110, 70, 70, 70, 70, 60, 60]
     x0 = 30
 
     def draw_row(values, y_pos, bold=False):
@@ -603,10 +620,10 @@ def attendance_export_pdf():
             r.employee.employee_id,
             r.employee.surname,
             r.employee.first_name,
-            r.am_in.strftime("%H:%M") if r.am_in else "",
-            r.lunch_out.strftime("%H:%M") if r.lunch_out else "",
-            r.lunch_in.strftime("%H:%M") if r.lunch_in else "",
-            r.pm_out.strftime("%H:%M") if r.pm_out else "",
+            fmt_12h(r.am_in),
+            fmt_12h(r.lunch_out),
+            fmt_12h(r.lunch_in),
+            fmt_12h(r.pm_out),
             f"{r.total_minutes/60:.2f}",
             f"{r.overtime_minutes/60:.2f}",
         ]
@@ -675,10 +692,10 @@ def employee_attendance_export_excel(emp_id):
             "Employee ID": emp.employee_id,
             "Surname": emp.surname,
             "First Name": emp.first_name,
-            "AM In": (r.am_in.strftime("%H:%M") if r.am_in else ""),
-            "Lunch Out": (r.lunch_out.strftime("%H:%M") if r.lunch_out else ""),
-            "Lunch In": (r.lunch_in.strftime("%H:%M") if r.lunch_in else ""),
-            "PM Out": (r.pm_out.strftime("%H:%M") if r.pm_out else ""),
+            "AM In": fmt_12h(r.am_in),
+            "Lunch Out": fmt_12h(r.lunch_out),
+            "Lunch In": fmt_12h(r.lunch_in),
+            "PM Out": fmt_12h(r.pm_out),
             "Total Hours": round(r.total_minutes / 60, 2),
             "Overtime Hours": round(r.overtime_minutes / 60, 2),
         })
@@ -764,10 +781,10 @@ def employee_attendance_export_pdf(emp_id):
 
         row = [
             fmt_mdY(r.day),
-            r.am_in.strftime("%H:%M") if r.am_in else "",
-            r.lunch_out.strftime("%H:%M") if r.lunch_out else "",
-            r.lunch_in.strftime("%H:%M") if r.lunch_in else "",
-            r.pm_out.strftime("%H:%M") if r.pm_out else "",
+            fmt_12h(r.am_in),
+            fmt_12h(r.lunch_out),
+            fmt_12h(r.lunch_in),
+            fmt_12h(r.pm_out),
             f"{r.total_minutes/60:.2f}",
             f"{r.overtime_minutes/60:.2f}",
         ]
@@ -855,9 +872,7 @@ def _visitor_filter_label():
             # today
             q = q.filter(Attendance.day == today)
 
-
     return "All Records"
-
 
 #EXPORT VISITOR BY EXCEL
 @admin_bp.route("/visitors/export/excel", methods=["GET"])
@@ -1072,7 +1087,208 @@ def visitors():
         from_date=from_raw,
         to_date=to_raw,
     )
+    
+@admin_bp.route("/visitors/monthly-report", methods=["GET"])
+@login_required
+def visitors_monthly_report():
+    month = request.args.get("month", "").strip()  # YYYY-MM
 
+    q = Visitor.query
+    rows = []
+    total = 0
+
+    if month:
+        y, m = month.split("-")
+        y = int(y); m = int(m)
+        start = date(y, m, 1)
+        end = date(y + 1, 1, 1) if m == 12 else date(y, m + 1, 1)
+
+        q = q.filter(
+            Visitor.time_in >= datetime.combine(start, time(0, 0)),
+            Visitor.time_in < datetime.combine(end, time(0, 0))
+        )
+
+        rows = q.order_by(Visitor.time_in.desc()).all()
+        total = len(rows)
+
+    return render_template(
+        "admin/visitors_monthly_report.html",
+        rows=rows,
+        total=total,
+        month=month,
+    )
+    
+@admin_bp.route("/visitors/monthly-report/export/excel", methods=["GET"])
+@login_required
+def visitors_monthly_report_export_excel():
+    month = request.args.get("month", "").strip()
+    if not month:
+        return redirect(url_for("admin.visitors_monthly_report"))
+
+    y, m = month.split("-")
+    y = int(y); m = int(m)
+    start = date(y, m, 1)
+    end = date(y + 1, 1, 1) if m == 12 else date(y, m + 1, 1)
+
+    rows = (Visitor.query
+        .filter(
+            Visitor.time_in >= datetime.combine(start, time(0,0)),
+            Visitor.time_in < datetime.combine(end, time(0,0))
+        )
+        .order_by(Visitor.time_in.asc())
+        .all()
+    )
+
+    data = []
+    for v in rows:
+        data.append({
+            "Name": v.full_name,
+            "Gender": v.gender or "",
+            "Age": v.age if v.age is not None else "",
+            "Contact": v.contact or "",
+            "Purpose": v.purpose or "",
+            "Time In": fmt_mdY_time(v.time_in),
+            "Time Out": fmt_mdY_time(v.time_out),
+        })
+
+    df = pd.DataFrame(data)
+
+    label = datetime(y, m, 1).strftime("%B %Y")
+    output = io.BytesIO()
+
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        pd.DataFrame([{"Month": label}]).to_excel(writer, index=False, sheet_name="Monthly Report", startrow=0)
+        df.to_excel(writer, index=False, sheet_name="Monthly Report", startrow=2)
+
+    output.seek(0)
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name=f"visitors_monthly_{month}.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+@admin_bp.route("/visitors/monthly-report/export/pdf", methods=["GET"])
+@login_required
+def visitors_monthly_report_export_pdf():
+    month = request.args.get("month", "").strip()
+    if not month:
+        return redirect(url_for("admin.visitors_monthly_report"))
+
+    y0, m0 = month.split("-")
+    y0 = int(y0); m0 = int(m0)
+    start = date(y0, m0, 1)
+    end = date(y0 + 1, 1, 1) if m0 == 12 else date(y0, m0 + 1, 1)
+
+    all_rows = (Visitor.query
+        .filter(
+            Visitor.time_in >= datetime.combine(start, time(0, 0)),
+            Visitor.time_in < datetime.combine(end, time(0, 0))
+        )
+        .order_by(Visitor.time_in.asc())
+        .all()
+    )
+
+    # ---- Grouping (Female first, then Male) ----
+    females = [v for v in all_rows if (v.gender or "").lower() == "female"]
+    males = [v for v in all_rows if (v.gender or "").lower() == "male"]
+    others = [v for v in all_rows if v not in females and v not in males]  # optional
+
+    month_label = datetime(y0, m0, 1).strftime("%B %Y")
+
+    buf = io.BytesIO()
+    c = canvas.Canvas(buf, pagesize=landscape(letter))
+    width, height = landscape(letter)
+
+    # column setup
+    headers = ["Name", "Gender", "Age", "Purpose", "Time In", "Time Out"]
+    col_w = [180, 70, 40, 220, 150, 150]
+    x0 = 30
+
+    def draw_table_title(title, y_pos):
+        c.setFont("Helvetica-Bold", 11)
+        c.drawString(x0, y_pos, title)
+
+    def draw_row(vals, y_pos, bold=False):
+        c.setFont("Helvetica-Bold" if bold else "Helvetica", 9)
+        x = x0
+        for v, w in zip(vals, col_w):
+            c.drawString(x, y_pos, str(v)[:45])
+            x += w
+
+    def draw_table_section(section_title, rows, y_pos):
+        """Draw one section (title + header + rows). Returns new y_pos."""
+        # if near bottom, new page
+        if y_pos < 80:
+            c.showPage()
+            y_pos = height - 40
+
+        draw_table_title(section_title, y_pos)
+        y_pos -= 14
+
+        # headers
+        draw_row(headers, y_pos, bold=True)
+        y_pos -= 10
+        c.line(x0, y_pos, width - 30, y_pos)
+        y_pos -= 14
+
+        if not rows:
+            c.setFont("Helvetica", 9)
+            c.drawString(x0, y_pos, "No records.")
+            y_pos -= 18
+            return y_pos
+
+        for v in rows:
+            if y_pos < 50:
+                c.showPage()
+                y_pos = height - 40
+                draw_table_title(section_title + " (cont.)", y_pos)
+                y_pos -= 14
+                draw_row(headers, y_pos, bold=True)
+                y_pos -= 10
+                c.line(x0, y_pos, width - 30, y_pos)
+                y_pos -= 14
+
+            row = [
+                v.full_name,
+                v.gender or "",
+                v.age if v.age is not None else "",
+                v.purpose or "",
+                fmt_mdY_time(v.time_in),
+                fmt_mdY_time(v.time_out),
+            ]
+            draw_row(row, y_pos, bold=False)
+            y_pos -= 14
+
+        y_pos -= 10  # space after section
+        return y_pos
+
+    # ---- Report title ----
+    y_pos = height - 40
+    c.setFont("Helvetica-Bold", 14)
+    c.drawString(x0, y_pos, "Monthly Visitor Report")
+    y_pos -= 16
+    c.setFont("Helvetica", 10)
+    c.drawString(x0, y_pos, f"Month: {month_label}")
+    y_pos -= 24
+
+    # ---- Female then Male ----
+    y_pos = draw_table_section(f"Female Visitors ({len(females)})", females, y_pos)
+    y_pos = draw_table_section(f"Male Visitors ({len(males)})", males, y_pos)
+
+    # Optional: include others/unknown at the end
+    if others:
+        y_pos = draw_table_section(f"Other/Unspecified ({len(others)})", others, y_pos)
+
+    c.save()
+    buf.seek(0)
+
+    return send_file(
+        buf,
+        as_attachment=True,
+        download_name=f"visitors_monthly_{month}.pdf",
+        mimetype="application/pdf"
+    )
 
 #LOGOUT BUTTON
 @admin_bp.route("/logout")

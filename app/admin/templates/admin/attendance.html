@@ -7,122 +7,164 @@
 
 {% block content %}
 
-<h3>Add / Update Attendance</h3>
-<form method="post" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+<div class="section-card">
+  <div class="att-top">
+  <div>
+    <h2 class="page-title">Attendance</h2>
+    <div class="att-sub">Filter logs and export reports. Use the modal to add/update records.</div>
+  </div>
 
-    <div>
-        <label>Employee</label><br>
-        <select name="employee_id" required>
-            <option value="">-- select --</option>
-            {% for e in employees %}
-            <option value="{{ e.id }}">{{ e.surname }}, {{ e.first_name }} ({{ e.employee_id }})</option>
-            {% endfor %}
-        </select>
-    </div>
-
-    <div>
-        <label>Date</label><br>
-        <input type="date" name="day" required>
-    </div>
-
-    <div>
-        <label>AM In</label><br>
-        <input type="time" name="am_in">
-    </div>
-
-    <div>
-        <label>Lunch Out</label><br>
-        <input type="time" name="lunch_out">
-    </div>
-
-    <div>
-        <label>Lunch In</label><br>
-        <input type="time" name="lunch_in">
-    </div>
-
-    <div>
-        <label>PM Out</label><br>
-        <input type="time" name="pm_out">
-    </div>
-
-    <button type="submit">Save</button>
-</form>
+  <div class="att-top-actions">
+    <a class="btn btn-primary" href="#att-modal">+ Add / Update</a>
+    <span class="page-meta"><b>Auto refresh:</b> 10s</span>
+    <a class="btn btn-soft" href="{{ url_for('admin.attendance', range='today') }}">Today</a>
+    <a class="btn btn-soft" href="{{ url_for('admin.attendance', range='week') }}">This Week</a>
+    <a class="btn btn-soft" href="{{ url_for('admin.attendance', range='month') }}">This Month</a>
+  </div>
+</div>
+</div>
 
 {% if msg %}
-<p style="color:green; margin-top:10px;">{{ msg }}</p>
+  <div class="alert alert-ok">{{ msg }}</div>
 {% endif %}
 {% if error %}
-<p style="color:red; margin-top:10px;">{{ error }}</p>
+  <div class="alert alert-danger">{{ error }}</div>
 {% endif %}
 
-<hr style="margin:18px 0;">
+<!-- Filters -->
+<div class="section-card">
+<form method="get" class="att-filter-compact">
+  <div class="f">
+    <label>From</label>
+    <input class="inp" type="date" name="from" value="{{ from_date or '' }}">
+  </div>
 
-<h3>Filter Attendance</h3>
-<form method="get" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-bottom:14px;">
+  <div class="f">
+    <label>To</label>
+    <input class="inp" type="date" name="to" value="{{ to_date or '' }}">
+  </div>
 
-    <div>
-        <label>From</label><br>
-        <input type="date" name="from" value="{{ from_date or '' }}">
-    </div>
+  <div class="f">
+    <label>Month</label>
+    <select class="inp" name="month">
+      <option value="">-- select --</option>
+      {% for m in months %}
+        <option value="{{ m.value }}" {% if month==m.value %}selected{% endif %}>{{ m.label }}</option>
+      {% endfor %}
+    </select>
+  </div>
 
-    <div>
-        <label>To</label><br>
-        <input type="date" name="to" value="{{ to_date or '' }}">
-    </div>
+  <div class="att-filter-actions">
+    <button class="btn btn-primary btn-mini" type="submit">Apply</button>
+    <a class="btn btn-ghost btn-mini" href="{{ url_for('admin.attendance') }}">Reset</a>
 
-    <div>
-        <label>Month</label><br>
-        <select name="month">
-            <option value="">-- select --</option>
-            {% for m in months %}
-            <option value="{{ m.value }}" {% if month==m.value %}selected{% endif %}>{{ m.label }}</option>
-            {% endfor %}
-        </select>
-    </div>
-
-    <button type="submit">Apply</button>
-    <a href="{{ url_for('admin.attendance', range='today') }}">Today</a> |
-    <a href="{{ url_for('admin.attendance', range='week') }}">This Week</a> |
-    <a href="{{ url_for('admin.attendance', range='month') }}">This Month</a>
-
-    <a href="{{ url_for('admin.attendance') }}">Reset</a>
-
-    <button type="submit" formaction="{{ url_for('admin.attendance_export_excel') }}" formmethod="get">
-        Export Excel
+    <button class="btn btn-soft btn-mini" type="submit"
+            formaction="{{ url_for('admin.attendance_export_excel') }}" formmethod="get">
+      Export Excel
     </button>
 
-    <button type="submit" formaction="{{ url_for('admin.attendance_export_pdf') }}" formmethod="get">
-        Export PDF
+    <button class="btn btn-soft btn-mini" type="submit"
+            formaction="{{ url_for('admin.attendance_export_pdf') }}" formmethod="get">
+      Export PDF
     </button>
-
-
+  </div>
 </form>
+</div>
 
-<h3>Attendance Results</h3>
-<table border="1" cellpadding="8" cellspacing="0" style="background:white; width:100%;">
-    <tr>
-        <th>Date</th>
-        <th>Employee</th>
-        <th>AM In</th>
-        <th>Lunch Out</th>
-        <th>Lunch In</th>
-        <th>PM Out</th>
-        <th>Total (hrs)</th>
-        <th>Overtime (hrs)</th>
-    </tr>
-    {% for r in records %}
-    <tr>
-        <td>{{ r.day|mdY }}</td>
-        <td>{{ r.employee.surname }}, {{ r.employee.first_name }}</td>
-        <td>{{ r.am_in.strftime("%I:%M %p") if r.am_in else "" }}</td>
-        <td>{{ r.lunch_out.strftime("%I:%M %p") if r.lunch_out else "" }}</td>
-        <td>{{ r.lunch_in.strftime("%I:%M %p") if r.lunch_in else "" }}</td>
-        <td>{{ r.pm_out.strftime("%I:%M %p") if r.pm_out else "" }}</td>
+<!-- Results -->
+<div class="section-card">
+  <div class="section-head">
+    <h3>Attendance Results</h3>
+    <span class="badge">{{ records|length }} record(s)</span>
+  </div>
 
-        <td>{{ "%.2f"|format(r.total_minutes/60) }}</td>
-        <td>{{ "%.2f"|format(r.overtime_minutes/60) }}</td>
-    </tr>
-    {% endfor %}
-</table>
+  <div class="table-wrap">
+    <table class="table att-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Employee</th>
+          <th>AM In</th>
+          <th>Lunch Out</th>
+          <th>Lunch In</th>
+          <th>PM Out</th>
+          <th class="text-right">Total (hrs)</th>
+          <th class="text-right">Overtime (hrs)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in records %}
+        <tr>
+          <td>{{ r.day|mdY }}</td>
+          <td><b>{{ r.employee.surname }}</b>, {{ r.employee.first_name }}</td>
+          <td>{{ r.am_in.strftime("%I:%M %p") if r.am_in else "" }}</td>
+          <td>{{ r.lunch_out.strftime("%I:%M %p") if r.lunch_out else "" }}</td>
+          <td>{{ r.lunch_in.strftime("%I:%M %p") if r.lunch_in else "" }}</td>
+          <td>{{ r.pm_out.strftime("%I:%M %p") if r.pm_out else "" }}</td>
+          <td class="text-right">{{ "%.2f"|format(r.total_minutes/60) }}</td>
+          <td class="text-right">{{ "%.2f"|format(r.overtime_minutes/60) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===== CSS-ONLY MODAL (NO JS) ===== -->
+<div class="modal" id="att-modal" aria-hidden="true">
+  <a class="modal-backdrop" href="#att-page" aria-label="Close"></a>
+
+  <div class="modal-card modal-wide" role="dialog" aria-modal="true" aria-labelledby="attModalTitle">
+    <div class="modal-head">
+      <div>
+        <h3 id="attModalTitle">Add / Update Attendance</h3>
+        <div class="modal-sub">Fill the fields you want to update, then save.</div>
+      </div>
+      <a class="modal-close" href="#att-page" aria-label="Close">×</a>
+    </div>
+
+    <form method="post" class="att-modal-form">
+      <div class="f span-2">
+        <label>Employee</label>
+        <select class="inp" name="employee_id" required>
+          <option value="">-- select --</option>
+          {% for e in employees %}
+            <option value="{{ e.id }}">{{ e.surname }}, {{ e.first_name }} ({{ e.employee_id }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="f">
+        <label>Date</label>
+        <input class="inp" type="date" name="day" required>
+      </div>
+
+      <div class="f">
+        <label>AM In</label>
+        <input class="inp" type="time" name="am_in">
+      </div>
+
+      <div class="f">
+        <label>Lunch Out</label>
+        <input class="inp" type="time" name="lunch_out">
+      </div>
+
+      <div class="f">
+        <label>Lunch In</label>
+        <input class="inp" type="time" name="lunch_in">
+      </div>
+
+      <div class="f">
+        <label>PM Out</label>
+        <input class="inp" type="time" name="pm_out">
+      </div>
+
+      <div class="modal-actions">
+        <a class="btn btn-ghost" href="#att-page">Cancel</a>
+        <button class="btn btn-primary" type="submit">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 {% endblock %}
