@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ULLS – Admin Login</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --c-accent: #00ADF1;
+      --c-accent-2: #01FFF4;
+      --c-bg: #EAF9FF;
+      --c-dark: #506DC5;
+      --c-dark-strong: #3F5DB3;
+      --c-green: #00FF05;
+
+      --txt: #10203A;
+      --txt-soft: rgba(16, 32, 58, .72);
+      --txt-muted: rgba(16, 32, 58, .58);
+
+      --card: rgba(255, 255, 255, .80);
+      --card-strong: rgba(255, 255, 255, .90);
+      --border: rgba(33, 72, 255, .16);
+      --shadow: 0 18px 46px rgba(10, 38, 120, .12);
+      --radius: 22px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Poppins", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--txt);
+      min-height: 100vh;
+      background:
+        radial-gradient(760px 340px at 78% 8%, rgba(0, 173, 241, .14), transparent 62%),
+        radial-gradient(560px 280px at 18% 18%, rgba(1, 255, 244, .10), transparent 60%),
+        linear-gradient(180deg, var(--c-bg), #fff);
+      overflow-x: hidden;
+    }
+
+    .shell {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 28px 16px;
+      position: relative;
+    }
+
+    .shell:before,
+    .shell:after {
+      content: "";
+      position: absolute;
+      width: 780px;
+      height: 780px;
+      border-radius: 999px;
+      opacity: .72;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .shell:before {
+      top: -180px;
+      right: -160px;
+      background: rgba(0, 173, 241, .10);
+    }
+
+    .shell:after {
+      bottom: -220px;
+      left: -180px;
+      background: rgba(33, 72, 255, .08);
+    }
+
+    .stack {
+      width: min(520px, 100%);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .art-card {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 14px 34px rgba(10, 38, 120, .08);
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      backdrop-filter: blur(6px);
+    }
+
+    .book-illu {
+      width: 120px;
+      height: 84px;
+      flex: 0 0 auto;
+      filter: drop-shadow(0 10px 12px rgba(10, 38, 120, .10));
+    }
+
+    .art-meta {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .82);
+      border: 1px solid rgba(33, 72, 255, .16);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--txt-soft);
+      width: fit-content;
+      margin-bottom: 8px;
+    }
+
+    .art-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--c-dark);
+      line-height: 1.15;
+    }
+
+    .art-sub {
+      margin: 5px 0 0;
+      font-size: 12.5px;
+      color: var(--txt-muted);
+      line-height: 1.35;
+    }
+
+    .login {
+      width: 100%;
+      background: var(--card-strong);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px 20px 16px;
+      backdrop-filter: blur(8px);
+    }
+
+    .title {
+      margin: 10px 0 10px;
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -.3px;
+      text-align: center;
+      color: var(--c-dark);
+    }
+
+    .divider {
+      height: 1px;
+      background: rgba(33, 72, 255, .12);
+      margin: 0 0 14px;
+    }
+
+    .form {
+      display: grid;
+      gap: 12px;
+    }
+
+    label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--txt-soft);
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .field {
+      background: rgba(255, 255, 255, .96);
+      border: 1px solid rgba(33, 72, 255, .18);
+      border-radius: 14px;
+      padding: 12px 12px;
+      outline: none;
+      width: 100%;
+      font-size: 14px;
+      color: var(--txt);
+      transition: .15s ease;
+      font-family: inherit;
+    }
+
+    .field:focus {
+      border-color: rgba(0, 173, 241, .70);
+      box-shadow: 0 0 0 4px rgba(0, 173, 241, .14);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-weight: 700;
+      font-size: 14px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: .15s ease;
+      user-select: none;
+      width: 100%;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: var(--c-dark);
+      color: #fff;
+      box-shadow: 0 12px 20px rgba(80, 109, 197, .24);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      background: var(--c-dark-strong);
+      box-shadow: 0 16px 26px rgba(80, 109, 197, .28);
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    .link {
+      color: var(--txt-soft);
+      font-size: 13px;
+      text-decoration: none;
+      padding: 8px 10px;
+      border-radius: 12px;
+      transition: .15s ease;
+    }
+
+    .link:hover {
+      background: rgba(0, 173, 241, .10);
+      color: var(--c-dark);
+    }
+
+    .mini-foot {
+      margin-top: 10px;
+      font-size: 11.5px;
+      color: var(--txt-muted);
+      text-align: center;
+    }
+
+    .error {
+      margin-top: 10px;
+      background: rgba(255, 76, 46, .10);
+      border: 1px solid rgba(255, 76, 46, .22);
+      color: #8F1D1D;
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    @media (max-width: 420px) {
+      .art-card {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .kicker {
+        margin: 0 auto 8px;
+      }
+
+      .art-meta {
+        align-items: center;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="shell">
+    <div class="stack">
+
+      <div class="art-card">
+        <svg class="book-illu" viewBox="0 0 320 220" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <ellipse cx="165" cy="198" rx="120" ry="14" fill="rgba(10,38,120,.10)" />
+          <rect x="58" y="92" width="70" height="95" rx="12" fill="#01FFF4" opacity=".45" />
+          <rect x="66" y="106" width="54" height="10" rx="5" fill="rgba(255,255,255,.60)" />
+          <rect x="66" y="126" width="40" height="10" rx="5" fill="rgba(255,255,255,.50)" />
+          <rect x="126" y="72" width="78" height="115" rx="12" fill="#00ADF1" opacity=".72" />
+          <rect x="136" y="88" width="56" height="10" rx="5" fill="rgba(255,255,255,.60)" />
+          <rect x="136" y="108" width="48" height="10" rx="5" fill="rgba(255,255,255,.48)" />
+          <rect x="206" y="90" width="56" height="97" rx="12" fill="#506DC5" opacity=".52" />
+          <rect x="214" y="106" width="40" height="10" rx="5" fill="rgba(255,255,255,.55)" />
+          <circle cx="262" cy="70" r="18" fill="rgba(80,109,197,.22)" />
+          <circle cx="286" cy="60" r="12" fill="rgba(0,173,241,.20)" />
+        </svg>
+
+        <div class="art-meta">
+          <div class="kicker">ULLS • Admin Portal</div>
+          <p class="art-title">Library Management Login</p>
+          <p class="art-sub">Secure access for authorized administrators.</p>
+        </div>
+      </div>
+
+      <div class="login">
+        <div class="title">Login</div>
+        <div class="divider"></div>
+
+        <form method="post" class="form" autocomplete="off">
+          <div>
+            <label for="username">Username</label>
+            <input id="username" class="field" name="username" placeholder="Enter username" required>
+          </div>
+
+          <div>
+            <label for="password">Password</label>
+            <input id="password" class="field" name="password" type="password" placeholder="Enter password" required>
+          </div>
+
+          <button class="btn btn-primary" type="submit">Login</button>
+
+          <div class="row">
+            <a class="link" href="{{ url_for('landing') }}">← Back to Home</a>
+          </div>
+
+          {% if error %}
+          <div class="error">{{ error }}</div>
+          {% endif %}
+        </form>
+
+        <div class="mini-foot">© Urdaneta City Library • ULLS</div>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

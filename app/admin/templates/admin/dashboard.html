@@ -1,0 +1,124 @@
+{% extends "admin/layout.html" %}
+{% set title = "Dashboard" %}
+
+{% block content %}
+
+<div class="dash-hero">
+  <div class="dash-hero-left">
+    <div class="dash-sub">Overview of today's attendance and visitor activity.</div>
+  </div>
+  <div class="dash-hero-right">
+    <div class="dash-pill"><span class="dot"></span> {{ today|mdY }}</div>
+  </div>
+</div>
+
+
+<div class="stats">
+  <div class="stat-card">
+    <div class="stat-label">Total Employees</div>
+    <div class="stat-value">{{ total_employees }}</div>
+    <div class="stat-sub">Active employee records</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-label">Logged Today</div>
+    <div class="stat-value">{{ logged_today }}</div>
+    <div class="stat-sub">Attendance entries today</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-label">Late Today</div>
+    <div class="stat-value">{{ late_today }}</div>
+    <div class="stat-sub">Based on cutoff time</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-label">Visitors Today</div>
+    <div class="stat-value">{{ visitors_today_count }}</div>
+    <div class="stat-sub">Logged visitors today</div>
+  </div>
+</div>
+
+<!-- Employee Logs -->
+<div class="section-card">
+  <div class="section-head">
+    <h3>Employee Logs Today</h3>
+    <span class="badge">Cutoff: {{ late_cutoff.strftime("%I:%M %p") }}</span>
+  </div>
+
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Employee</th>
+          <th class="center">Late?</th>
+          <th>AM In</th>
+          <th>Lunch Out</th>
+          <th>Lunch In</th>
+          <th>PM Out</th>
+          <th class="text-right">Total (hrs)</th>
+          <th class="text-right">OT (hrs)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in records %}
+        <tr>
+          <td>{{ r.employee.surname }}, {{ r.employee.first_name }}</td>
+
+          <td class="center">
+            {% if r.am_in and r.am_in > late_cutoff %}
+            <span class="chip chip-danger">Late</span>
+            {% else %}
+            <span class="chip chip-ok">On time</span>
+            {% endif %}
+          </td>
+
+
+          <td>{{ r.am_in.strftime("%I:%M %p") if r.am_in else "" }}</td>
+          <td>{{ r.lunch_out.strftime("%I:%M %p") if r.lunch_out else "" }}</td>
+          <td>{{ r.lunch_in.strftime("%I:%M %p") if r.lunch_in else "" }}</td>
+          <td>{{ r.pm_out.strftime("%I:%M %p") if r.pm_out else "" }}</td>
+
+          <td class="text-right">{{ "%.2f"|format(r.total_minutes/60) }}</td>
+          <td class="text-right">{{ "%.2f"|format(r.overtime_minutes/60) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Visitors -->
+<div class="section-card">
+  <div class="section-head">
+    <h3>Visitors Today</h3>
+    <span class="badge">{{ visitors_today_count }} total</span>
+  </div>
+
+  <div class="table-wrap">
+    <table class="table" style="min-width: 760px;">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Contact</th>
+          <th>Purpose</th>
+          <th>Time In</th>
+          <th>Time Out</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in visitors %}
+        <tr>
+          <td>{{ v.full_name }}</td>
+          <td>{{ v.contact or "" }}</td>
+          <td>{{ v.purpose or "" }}</td>
+          <td>{{ v.time_in|mdY_time }}</td>
+          <td>{{ v.time_out|mdY_time }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

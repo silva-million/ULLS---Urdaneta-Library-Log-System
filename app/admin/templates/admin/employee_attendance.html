@@ -1,0 +1,122 @@
+{% extends "admin/layout.html" %}
+{% set title = "Employee Attendance" %}
+
+{% block content %}
+
+<!-- Employee header -->
+<div class="emp-head">
+  <div>
+    <h3 class="inline">{{ emp.surname }}, {{ emp.first_name }}</h3>
+    <div class="emp-head-sub">
+      Employee ID: <span class="mono">{{ emp.employee_id }}</span>
+    </div>
+  </div>
+
+  <div class="emp-actions">
+    <a class="btn btn-ghost" href="{{ url_for('admin.employees') }}">← Back to Employees</a>
+  </div>
+</div>
+
+<!-- Filters + exports (compact, admin style) -->
+<div class="section-card att-top">
+  <div class="section-head" style="margin-bottom:12px;">
+    <h3>Filter & Export</h3>
+    <span class="badge">
+      {{ records|length }} record{{ '' if records|length == 1 else 's' }}
+    </span>
+  </div>
+
+  <form method="get" class="att-filter-compact">
+    <div class="f">
+      <label>From</label>
+      <input class="inp" type="date" name="from" value="{{ from_date or '' }}">
+    </div>
+
+    <div class="f">
+      <label>To</label>
+      <input class="inp" type="date" name="to" value="{{ to_date or '' }}">
+    </div>
+
+    <div class="f">
+      <label>&nbsp;</label>
+      <button class="btn btn-primary" type="submit">Apply</button>
+    </div>
+
+    <div class="att-filter-actions">
+      <button
+        class="btn btn-soft"
+        type="submit"
+        formaction="{{ url_for('admin.employee_attendance_export_excel', emp_id=emp.id) }}"
+        formmethod="get"
+      >
+        Export Excel
+      </button>
+
+      <button
+        class="btn btn-soft"
+        type="submit"
+        formaction="{{ url_for('admin.employee_attendance_export_pdf', emp_id=emp.id) }}"
+        formmethod="get"
+      >
+        Export PDF
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Attendance table -->
+<div class="section-card">
+  <div class="section-head">
+    <h3>Attendance Records</h3>
+    <span class="badge">Hours shown in decimals</span>
+  </div>
+
+  <div class="table-wrap">
+    <table class="table att-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>AM In</th>
+          <th>Lunch Out</th>
+          <th>Lunch In</th>
+          <th>PM Out</th>
+          <th class="text-right">Total (hrs)</th>
+          <th class="text-right">OT (hrs)</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% if records and records|length > 0 %}
+          {% for r in records %}
+            <tr>
+              <td class="nowrap" style="font-weight:800; color:rgba(0,0,0,.72);">
+                {{ r.day|mdY }}
+              </td>
+
+              <td>{{ r.am_in.strftime("%I:%M %p") if r.am_in else "—" }}</td>
+              <td>{{ r.lunch_out.strftime("%I:%M %p") if r.lunch_out else "—" }}</td>
+              <td>{{ r.lunch_in.strftime("%I:%M %p") if r.lunch_in else "—" }}</td>
+              <td>{{ r.pm_out.strftime("%I:%M %p") if r.pm_out else "—" }}</td>
+
+              <td class="text-right">
+                {{ "%.2f"|format(((r.total_minutes or 0) / 60)) }}
+              </td>
+
+              <td class="text-right">
+                {{ "%.2f"|format(((r.overtime_minutes or 0) / 60)) }}
+              </td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="7" class="center" style="padding:14px; color:rgba(0,0,0,.60); font-weight:600;">
+              No attendance records found for the selected date range.
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

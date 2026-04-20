@@ -1,0 +1,111 @@
+{% extends "employee/layout.html" %}
+{% set title = "Dashboard" %}
+
+{% block head_extra %}
+<meta http-equiv="refresh" content="10">
+{% endblock %}
+
+{% block content %}
+
+<div class="section-card">
+  <div class="section-head">
+    <div>
+      <h3>Attendance Overview</h3>
+      <div class="sub">Showing {{ start|mdY }} to {{ end|mdY }}</div>
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <a class="btn btn-soft" href="{{ url_for('employee.dashboard', range='today') }}">Today</a>
+      <a class="btn btn-soft" href="{{ url_for('employee.dashboard', range='week') }}">This Week</a>
+      <a class="btn btn-soft" href="{{ url_for('employee.dashboard', range='month') }}">This Month</a>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-label">Total Employees</div>
+      <div class="stat-value">{{ total_employees }}</div>
+      <div class="stat-sub">Active employee records</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Logged Employees</div>
+      <div class="stat-value">{{ logged_employees }}</div>
+      <div class="stat-sub">Within selected range</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Late Today</div>
+      <div class="stat-value">{{ late_employees }}</div>
+      <div class="stat-sub">After 8:00 AM cutoff</div>
+    </div>
+  </div>
+</div>
+
+<div class="qr-shell">
+  <div class="qr-panel">
+    <div class="section-head">
+      <div>
+        <h3>Today’s Attendance QR</h3>
+        <div class="sub">Scan this to open the attendance page.</div>
+      </div>
+      <span class="badge">{{ today|mdY }}</span>
+    </div>
+
+    {% if token %}
+      <div class="qr-preview">
+        <img class="qr-image" src="{{ url_for('employee.qr_image_public', token=token) }}" alt="Daily QR">
+      </div>
+    {% else %}
+      <div class="flash error" style="margin-top:0;">No QR generated yet for today. Please ask the admin to generate it.</div>
+    {% endif %}
+  </div>
+
+  <div class="qr-panel">
+    <div class="section-head">
+      <div>
+        <h3>Recent Attendance Logs</h3>
+        <div class="sub">Latest employee attendance activity.</div>
+      </div>
+      <span class="badge">{{ records|length }} record(s)</span>
+    </div>
+
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>AM In</th>
+            <th>Lunch Out</th>
+            <th>Lunch In</th>
+            <th>PM Out</th>
+            <th>Late?</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in records %}
+          <tr {% if latest_id and r.id == latest_id %}style="background:rgba(0,255,5,.08);" {% endif %}>
+            <td><b>{{ r.employee.surname }}</b>, {{ r.employee.first_name }}</td>
+            <td>{{ r.am_in.strftime("%I:%M %p") if r.am_in else "-" }}</td>
+            <td>{{ r.lunch_out.strftime("%I:%M %p") if r.lunch_out else "-" }}</td>
+            <td>{{ r.lunch_in.strftime("%I:%M %p") if r.lunch_in else "-" }}</td>
+            <td>{{ r.pm_out.strftime("%I:%M %p") if r.pm_out else "-" }}</td>
+            <td>
+              {% if r.am_in and r.am_in > late_cutoff %}
+                <span class="badge" style="background:rgba(255,76,46,.14); border-color:rgba(255,76,46,.24);">Late</span>
+              {% else %}
+                <span class="badge" style="background:rgba(0,255,5,.10); border-color:rgba(0,255,5,.24);">On Time</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" class="center">No attendance records yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

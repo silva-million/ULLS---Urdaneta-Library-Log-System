@@ -1,0 +1,291 @@
+{% extends "admin/layout.html" %}
+{% set title = "Employees" %}
+
+{% block content %}
+
+<div class="emp-top">
+    <div>
+        <div class="emp-sub">Add, search, manage employee records, and export data.</div>
+    </div>
+
+    <div class="emp-actions">
+        <a class="btn btn-primary" href="#add-employee">+ Add Employee</a>
+        <a class="btn btn-soft" href="{{ url_for('admin.employees_export_pdf', **request.args) }}">Export PDF</a>
+    </div>
+</div>
+
+<!-- Search -->
+<div class="section-card">
+    <div class="section-head">
+        <h3>Search</h3>
+        <span class="badge">Filter list</span>
+    </div>
+
+    <form method="get" class="emp-search">
+        <input class="inp" name="q" value="{{ q or '' }}" placeholder="Search by surname">
+        <button class="btn btn-primary" type="submit">Search</button>
+        <a class="btn btn-ghost" href="{{ url_for('admin.employees') }}">Reset</a>
+    </form>
+</div>
+
+<!-- Staff List -->
+<div class="section-card" id="employees">
+    <div class="emp-head">
+        <div>
+            <h3>Staff</h3>
+            <div class="emp-head-sub">Regular library staff records.</div>
+        </div>
+        <span class="badge">{{ staff_employees|length }} result(s)</span>
+    </div>
+
+    <div class="table-wrap">
+        <table class="table emp-table">
+            <thead>
+                <tr>
+                    <th>Employee ID</th>
+                    <th>Name</th>
+                    <th>Birthday</th>
+                    <th>Position</th>
+                    <th>Active</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in staff_employees %}
+                <tr>
+                    <td><code class="mono">{{ e.employee_id }}</code></td>
+                    <td><b>{{ e.surname }}</b>, {{ e.first_name }} {{ e.middle_name or "" }}</td>
+                    <td>{{ e.birthday|mdY }}</td>
+                    <td>{{ e.position or "—" }}</td>
+                    <td>
+                        {% if e.is_active %}
+                        <span class="chip chip-ok">Active</span>
+                        {% else %}
+                        <span class="chip chip-danger">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="emp-action-stack">
+                            <div class="emp-action-row">
+                                <a class="btn btn-mini btn-neutral" href="#edit-employee-{{ e.id }}">Edit</a>
+                                <a class="btn btn-mini btn-info"
+                                    href="{{ url_for('admin.employee_attendance', emp_id=e.id) }}">Attendance</a>
+                            </div>
+                            <div class="emp-action-row">
+                                <form method="post" action="{{ url_for('admin.toggle_employee', emp_id=e.id) }}" class="inline">
+                                    <button class="btn btn-mini btn-warn" type="submit">
+                                        {{ "Deactivate" if e.is_active else "Activate" }}
+                                    </button>
+                                </form>
+                                <form method="post" action="{{ url_for('admin.delete_employee', emp_id=e.id) }}" class="inline"
+                                    onsubmit="return confirm('Delete this employee?');">
+                                    <button class="btn btn-mini btn-danger" type="submit">Delete</button>
+                                </form>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="center">No staff records found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Immersion / OJT List -->
+<div class="section-card">
+    <div class="emp-head">
+        <div>
+            <h3>Immersion / OJT</h3>
+            <div class="emp-head-sub">Student trainees and immersion records.</div>
+        </div>
+        <span class="badge">{{ ojt_employees|length }} result(s)</span>
+    </div>
+
+    <div class="table-wrap">
+        <table class="table emp-table">
+            <thead>
+                <tr>
+                    <th>Employee ID</th>
+                    <th>Name</th>
+                    <th>Birthday</th>
+                    <th>Position</th>
+                    <th>Active</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in ojt_employees %}
+                <tr>
+                    <td><code class="mono">{{ e.employee_id }}</code></td>
+                    <td><b>{{ e.surname }}</b>, {{ e.first_name }} {{ e.middle_name or "" }}</td>
+                    <td>{{ e.birthday|mdY }}</td>
+                    <td>{{ e.position or "—" }}</td>
+                    <td>
+                        {% if e.is_active %}
+                        <span class="chip chip-ok">Active</span>
+                        {% else %}
+                        <span class="chip chip-danger">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="emp-action-stack">
+                            <div class="emp-action-row">
+                                <a class="btn btn-mini btn-neutral" href="#edit-employee-{{ e.id }}">Edit</a>
+                                <a class="btn btn-mini btn-info"
+                                    href="{{ url_for('admin.employee_attendance', emp_id=e.id) }}">Attendance</a>
+                            </div>
+                            <div class="emp-action-row">
+                                <form method="post" action="{{ url_for('admin.toggle_employee', emp_id=e.id) }}" class="inline">
+                                    <button class="btn btn-mini btn-warn" type="submit">
+                                        {{ "Deactivate" if e.is_active else "Activate" }}
+                                    </button>
+                                </form>
+                                <form method="post" action="{{ url_for('admin.delete_employee', emp_id=e.id) }}" class="inline"
+                                    onsubmit="return confirm('Delete this employee?');">
+                                    <button class="btn btn-mini btn-danger" type="submit">Delete</button>
+                                </form>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="center">No immersion/OJT records found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ===== ADD EMPLOYEE MODAL ===== -->
+<div class="modal" id="add-employee" aria-hidden="true">
+    <a class="modal-backdrop" href="#employees" aria-label="Close"></a>
+
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-head">
+            <div>
+                <h3 id="modalTitle">Add Employee</h3>
+                <div class="modal-sub">Create a new employee record.</div>
+            </div>
+            <a class="modal-close" href="#employees" aria-label="Close">×</a>
+        </div>
+
+       <form method="post" class="emp-form modal-form">
+
+  <div class="f span-2">
+    <label>Employee ID</label>
+    <input class="inp" name="employee_id" required>
+  </div>
+
+  <div class="f">
+    <label>Surname</label>
+    <input class="inp" name="surname" required>
+  </div>
+
+  <div class="f">
+    <label>First Name</label>
+    <input class="inp" name="first_name" required>
+  </div>
+
+  <div class="f span-2">
+    <label>Middle Name</label>
+    <input class="inp" name="middle_name">
+  </div>
+
+  <div class="f">
+    <label>Birthday</label>
+    <input class="inp" type="date" name="birthday">
+  </div>
+
+  <div class="f">
+    <label>Position</label>
+    <input class="inp" name="position">
+  </div>
+
+  <div class="f span-2">
+    <label>Status</label>
+    <select class="inp" name="status">
+      <option value="active">Active</option>
+      <option value="away">Away</option>
+      <option value="on_leave">On Leave</option>
+    </select>
+  </div>
+
+  <div class="modal-actions span-2">
+    <a class="btn btn-ghost" href="#employees">Cancel</a>
+    <button class="btn btn-primary" type="submit">Save</button>
+  </div>
+
+</form>
+    </div>
+</div>
+
+<!-- ===== EDIT EMPLOYEE MODAL ===== -->
+{% for e in staff_employees + ojt_employees %}
+<div class="modal" id="edit-employee-{{ e.id }}" aria-hidden="true">
+  <a class="modal-backdrop" href="#employees" aria-label="Close"></a>
+
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="editModalTitle{{ e.id }}">
+    <div class="modal-head">
+      <div>
+        <h3 id="editModalTitle{{ e.id }}">Edit Employee</h3>
+        <div class="modal-sub">Update employee, staff, or OJT details.</div>
+      </div>
+      <a class="modal-close" href="#employees" aria-label="Close">×</a>
+    </div>
+
+    <form method="post" action="{{ url_for('admin.edit_employee', emp_id=e.id) }}" class="emp-form modal-form">
+      <div class="f span-2">
+        <label>Employee ID</label>
+        <input class="inp" name="employee_id" value="{{ e.employee_id }}" required>
+      </div>
+
+      <div class="f">
+        <label>Surname</label>
+        <input class="inp" name="surname" value="{{ e.surname }}" required>
+      </div>
+
+      <div class="f">
+        <label>First Name</label>
+        <input class="inp" name="first_name" value="{{ e.first_name }}" required>
+      </div>
+
+      <div class="f span-2">
+        <label>Middle Name</label>
+        <input class="inp" name="middle_name" value="{{ e.middle_name or '' }}">
+      </div>
+
+      <div class="f">
+        <label>Birthday</label>
+        <input class="inp" type="date" name="birthday" value="{{ e.birthday.isoformat() if e.birthday else '' }}">
+      </div>
+
+      <div class="f">
+        <label>Position</label>
+        <input class="inp" name="position" value="{{ e.position or '' }}">
+      </div>
+
+      <div class="f span-2">
+        <label>Status</label>
+        <select class="inp" name="status">
+          <option value="active" {% if e.status == 'active' %}selected{% endif %}>Active</option>
+          <option value="away" {% if e.status == 'away' %}selected{% endif %}>Away</option>
+          <option value="on_leave" {% if e.status == 'on_leave' %}selected{% endif %}>On Leave</option>
+        </select>
+      </div>
+
+      <div class="modal-actions span-2">
+        <a class="btn btn-ghost" href="#employees">Cancel</a>
+        <button class="btn btn-primary" type="submit">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endfor %}
+
+{% endblock %}

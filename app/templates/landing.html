@@ -1,0 +1,778 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ULLS – Urdaneta Library Log System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --c-accent: #00ADF1;
+            --c-accent-2: #01FFF4;
+            --c-bg: #EAF9FF;
+            --c-dark: #506dc5;
+            --c-green: #00FF05;
+
+            --txt: #10203A;
+            --txt-soft: rgba(16, 32, 58, 0.72);
+            --txt-muted: rgba(16, 32, 58, 0.58);
+
+            --card: rgba(255, 255, 255, 0.82);
+            --card-strong: rgba(255, 255, 255, 0.92);
+            --border: rgba(33, 72, 255, 0.18);
+            --shadow: 0 12px 26px rgba(10, 38, 120, 0.12);
+            --radius: 18px;
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            font-family: "Poppins", system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", sans-serif;
+            color: var(--txt);
+            background:
+                radial-gradient(700px 300px at 80% 10%, rgba(0, 173, 241, .16), transparent 60%),
+                radial-gradient(500px 240px at 15% 15%, rgba(1, 255, 244, .14), transparent 60%),
+                linear-gradient(180deg, var(--c-bg), #fff);
+            min-height: 100vh
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none
+        }
+
+        .container {
+            width: min(1600px, 100%);
+            margin: 0 auto;
+            padding-left: clamp(16px, 3vw, 44px);
+            padding-right: clamp(16px, 3vw, 44px);
+        }
+
+
+        /* Top bar */
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, .72);
+            border-bottom: 1px solid var(--border);
+            padding: 10px 0;
+        }
+
+        .topbar-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            /* padding: 14px 0; */
+            gap: 16px;
+        }
+
+        .nav {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 18px;
+        }
+
+        .nav-logos {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-logos img:first-child {
+            width: 72px;
+            height: 72px;
+            object-fit: contain;
+        }
+
+        .nav-logos img:last-child {
+            width: 100px;
+            height: 80px;
+            object-fit: contain;
+        }
+
+        @media (max-width: 520px) {
+            .nav-logos img {
+                width: 56px;
+                height: 44px;
+                border-radius: 14px;
+                padding: 5px;
+            }
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-badge {
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            background: var(--c-accent);
+            box-shadow: 0 0 0 5px rgba(203, 153, 126, .25);
+            flex: 0 0 auto;
+        }
+
+        .brand-title {
+            line-height: 1.1;
+            font-weight: 800;
+            letter-spacing: .2px;
+            font-size: 35px;
+            color: var(--c-dark);
+        }
+
+        .brand-sub {
+            font-size: 20px;
+            color: var(--txt-soft);
+            margin-top: 2px;
+        }
+
+        nav ul {
+            display: flex;
+            gap: 18px;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        nav a {
+            font-size: 14px;
+            padding: 10px 10px;
+            border-radius: 12px;
+            color: rgba(0, 0, 0, .7);
+            transition: .15s ease;
+        }
+
+        nav a:hover {
+            background: rgba(221, 190, 169, .55);
+            color: rgba(0, 0, 0, .85);
+        }
+
+        /* Hero */
+        .hero {
+            padding: 38px 0 18px;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0px;
+            align-items: center;
+        }
+
+        @media (max-width: 900px) {
+            .hero-grid {
+                grid-template-columns: 1fr;
+                gap: 18px
+            }
+        }
+
+        .hero-left {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 26px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .hero-left:before {
+            content: "";
+            position: absolute;
+            inset: -120px -160px auto auto;
+            width: 320px;
+            height: 320px;
+            background: rgba(0, 173, 241, .12);
+            border-radius: 999px;
+        }
+
+        .hero-left:after {
+            content: "";
+            position: absolute;
+            inset: auto auto -140px -160px;
+            width: 340px;
+            height: 340px;
+            background: rgba(33, 72, 255, .10);
+            border-radius: 999px;
+        }
+
+
+        .logo-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .hero-text {
+            position: relative;
+            z-index: 1;
+            margin-top: 18px;
+        }
+
+        .kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, .78);
+            border: 1px solid rgba(33, 72, 255, .16);
+            font-size: 13px;
+            color: var(--txt-soft);
+            font-weight: 600;
+        }
+
+        .kicker-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: var(--c-dark);
+            opacity: .9;
+        }
+
+        h1 {
+            margin: 14px 0 10px;
+            font-size: clamp(28px, 3.4vw, 44px);
+            line-height: 1.08;
+            color: var(--c-dark);
+            letter-spacing: -.6px;
+        }
+
+        .lead {
+            margin: 0 0 18px;
+            font-size: 16px;
+            color: var(--txt-soft);
+            max-width: 58ch;
+        }
+
+        .cta-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 14px;
+        }
+
+        h1 {
+            margin: 14px 0 10px;
+            font-size: clamp(28px, 3.4vw, 44px);
+            line-height: 1.08;
+            color: var(--c-dark);
+            letter-spacing: -.6px;
+        }
+
+        .lead {
+            margin: 0 0 18px;
+            font-size: 16px;
+            color: var(--txt-soft);
+            max-width: 58ch;
+        }
+
+        /* Right hero panel (illustration placeholder like the sample) */
+        .hero-right {
+            border-radius: var(--radius);
+            background: linear-gradient(180deg, rgba(183, 183, 164, .50), rgba(221, 190, 169, .45));
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            padding: 18px;
+            min-height: 310px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-right .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, .6);
+            border: 1px solid var(--border);
+            font-size: 13px;
+            font-weight: 700;
+            width: fit-content;
+            color: rgba(0, 0, 0, .75);
+        }
+
+        .illus {
+            margin-top: 12px;
+            background: rgba(255, 255, 255, .55);
+            border: 1px dashed rgba(107, 112, 92, .35);
+            border-radius: 16px;
+            padding: 18px;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: rgba(0, 0, 0, .65);
+            font-weight: 700;
+        }
+
+        .hero-right small {
+            color: rgba(0, 0, 0, .65);
+            line-height: 1.4;
+        }
+
+        /* Feature strip (like sample bottom band) */
+        .strip {
+            margin-top: 20px;
+            padding: 18px 0 28px;
+        }
+
+        .strip-inner {
+            background: linear-gradient(90deg, rgba(33, 72, 255, .12), rgba(0, 173, 241, .12));
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            padding: 16px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        @media (max-width: 900px) {
+            .strip-inner {
+                grid-template-columns: 1fr 1fr
+            }
+        }
+
+        @media (max-width: 520px) {
+            .strip-inner {
+                grid-template-columns: 1fr
+            }
+        }
+
+        .strip-card {
+            background: rgba(255, 255, 255, .82);
+            border: 1px solid rgba(33, 72, 255, .14);
+            border-radius: 18px;
+            padding: 14px 14px;
+            box-shadow: 0 8px 18px rgba(10, 38, 120, .05);
+        }
+
+        .strip-card h3 {
+            margin: 0;
+            font-size: 14px;
+            color: var(--c-dark);
+            letter-spacing: .2px;
+        }
+
+        .strip-card p {
+            margin: 6px 0 0;
+            font-size: 13px;
+            color: rgba(0, 0, 0, .68);
+            line-height: 1.35;
+        }
+
+        /* make strip hold 3 portal cards */
+        .strip-inner.strip-portals {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        @media (max-width: 900px) {
+            .strip-inner.strip-portals {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .portal-mini {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 170px;
+        }
+
+        .portal-mini h3 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .portal-mini p {
+            margin: 0;
+            font-size: 13px;
+            color: rgba(0, 0, 0, .68);
+            line-height: 1.4;
+        }
+
+        .mini-head {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .mini-tag {
+            width: fit-content;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 800;
+            background: rgba(255, 255, 255, .82);
+            border: 1px solid rgba(33, 72, 255, .16);
+            color: var(--txt-soft);
+        }
+
+        .mini-actions {
+            margin-top: auto;
+            /* pushes button to bottom */
+        }
+
+
+        /* Portal section */
+        .portal {
+            padding: 4px 0 34px;
+        }
+
+        .portal-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 14px;
+        }
+
+        @media (max-width: 900px) {
+            .portal-grid {
+                grid-template-columns: 1fr
+            }
+        }
+
+        .portal-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .portal-card .tag {
+            width: fit-content;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 800;
+            border: 1px solid rgba(107, 112, 92, .22);
+            background: rgba(255, 255, 255, .55);
+            color: rgba(0, 0, 0, .72);
+        }
+
+        .portal-card h4 {
+            margin: 0;
+            font-size: 18px;
+            color: var(--c-dark);
+        }
+
+        .portal-card p {
+            margin: 0;
+            font-size: 13.5px;
+            color: rgba(0, 0, 0, .70);
+            line-height: 1.45;
+        }
+
+        .portal-card .actions {
+            margin-top: 6px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 18px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: 0.2s ease;
+            border: none;
+        }
+
+        /* MAIN BUTTON */
+        .btn-primary {
+            background: var(--c-dark);
+            color: #fff;
+            box-shadow: 0 6px 14px rgba(44, 91, 234, 0.25);
+        }
+
+        .btn-primary:hover {
+            background: #3f5db3;
+            transform: translateY(-1px);
+        }
+
+        /* SOFT VERSION (optional) */
+        .btn-soft {
+            background: rgba(44, 91, 234, 0.1);
+            color: var(--c-dark);
+        }
+
+        .btn-soft:hover {
+            background: rgba(44, 91, 234, 0.18);
+        }
+
+        .btn-outline {
+            background: rgba(255, 255, 255, .62);
+            border: 1px solid rgba(107, 112, 92, .28);
+            color: rgba(0, 0, 0, .78);
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, .8)
+        }
+
+        /* Credits section */
+        .credits-card {
+            padding: 18px !important;
+        }
+
+        .credits-grid {
+            margin-top: 12px;
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 16px;
+            align-items: stretch;
+        }
+
+        @media (max-width: 900px) {
+            .credits-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .credits-logo,
+        .credits-names {
+            background: rgba(255, 255, 255, .72);
+            border: 1px solid rgba(33, 72, 255, .14);
+            border-radius: 16px;
+            padding: 14px;
+            height: 100%;
+        }
+
+        .credits-logo img {
+            width: 64px;
+            height: 64px;
+            object-fit: contain;
+            background: rgba(255, 255, 255, .7);
+            border: 1px solid rgba(107, 112, 92, .18);
+            border-radius: 16px;
+            padding: 6px;
+        }
+
+        .credits-school .muted {
+            color: rgba(0, 0, 0, .62);
+            font-size: 13px;
+            margin-top: 2px;
+        }
+
+        .credits-title {
+            font-size: 14px;
+            letter-spacing: .2px;
+            margin-bottom: 6px;
+            color: var(--c-dark);
+        }
+
+        .name-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        @media (max-width: 520px) {
+            .name-list {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .name-list li {
+            font-size: 13.5px;
+            color: rgba(0, 0, 0, .72);
+        }
+
+        .muted.small {
+            margin-top: 10px;
+            font-size: 12px;
+            color: rgba(0, 0, 0, .58);
+        }
+
+
+        /* Footer */
+        footer {
+            padding: 18px 0 26px;
+            border-top: 1px solid var(--border);
+            background: rgba(255, 255, 255, .62);
+        }
+
+        .footer-inner {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+            color: var(--txt-soft);
+            font-size: 13px;
+        }
+
+        code.inline {
+            background: rgba(255, 255, 255, .6);
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(107, 112, 92, .18);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Top Navigation (like the sample) -->
+    <header class="topbar">
+        <div class="container topbar-inner">
+            <div class="brand">
+                <div class="nav-logos" aria-label="Logos">
+                    <img src="{{ url_for('static', filename='img/library_logo.png') }}" alt="Library Logo">
+                    <img src="{{ url_for('static', filename='img/urdaneta_logo.png') }}" alt="Urdaneta City Logo">
+                </div>
+
+                <div>
+                    <div class="brand-title">ULLS</div>
+                    <div class="brand-sub">Urdaneta Library Log System</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero -->
+    <main class="container hero">
+        <section class="hero-grid">
+            <div class="hero-left">
+
+                <div class="hero-text">
+                    <span class="kicker"><span class="kicker-dot"></span> Attendance • Visitors • Daily QR
+                        Logging</span>
+                    <h1>Track library activity fast, clean, and organized.</h1>
+                    <p class="lead" id="about">
+                        ULLS helps Admin manage employees, attendance, and visitor logs.
+                        Employees can scan the daily QR and review records. Visitors can register entry quickly.
+                    </p>
+                </div>
+            </div>
+
+            <!-- <aside class="hero-right" aria-label="Hero panel">
+                <div class="pill">Online Library</div>
+
+                <div class="illus">
+                    Illustration / Banner Area<br>
+                    <span style="font-weight:600; font-size:12px; opacity:.75;">
+                        (optional: add static/img/landing_illustration.png)
+                    </span>
+                </div>
+
+                <small>
+                    Tip: keep your logos in <code class="inline">static/img/</code> and optionally add a hero
+                    illustration.
+                </small>
+            </aside> -->
+        </section>
+
+        <!-- Portal Cards -->
+        <section class="strip" id="portals">
+            <div class="strip-inner strip-portals">
+
+                <article class="strip-card portal-mini">
+                    <div class="mini-head">
+                        <span class="mini-tag">Admin</span>
+                        <h3>Manage the system</h3>
+                    </div>
+                    <p>Control employees, attendance validation, visitor logs, and exports.</p>
+                    <div class="mini-actions">
+                        <a class="btn btn-primary" href="{{ url_for('admin.login') }}">Open Admin</a>
+                    </div>
+                </article>
+
+                <article class="strip-card portal-mini">
+                    <div class="mini-head">
+                        <span class="mini-tag">Employee</span>
+                        <h3>Dashboard & logs</h3>
+                    </div>
+                    <p>Scan daily QR, review your attendance history, and monitor entries.</p>
+                    <div class="mini-actions">
+                        <a class="btn btn-primary" href="{{ url_for('employee.dashboard', range='today') }}">Open
+                            Employee</a>
+                    </div>
+                </article>
+
+                <article class="strip-card portal-mini">
+                    <div class="mini-head">
+                        <span class="mini-tag">Visitor</span>
+                        <h3>Quick entry</h3>
+                    </div>
+                    <p>Simple visitor logging for faster registration and cleaner records.</p>
+                    <div class="mini-actions">
+                        <a class="btn btn-primary" href="{{ url_for('visitor.visitor_home') }}">Open Visitor</a>
+                    </div>
+                </article>
+
+            </div>
+        </section>
+
+        <!-- Setup / Notes -->
+        <section id="credits" style="padding-bottom: 28px;">
+            <div class="hero-left credits-card">
+                <div class="credits-top">
+                    <span class="kicker" style="margin:0;">
+                        <span class="kicker-dot"></span> Credits • BSIT OJT Students
+                    </span>
+                </div>
+
+                <div class="credits-grid">
+                    <div class="credits-logo">
+                        <!-- PSU logo file: put it in static/img/psu_logo.png (or change filename below) -->
+                        <img src="{{ url_for('static', filename='img/psu_logo.png') }}" alt="PSU Logo">
+                        <div class="credits-school">
+                            <b>Pangasinan State University - Urdaneta City Campus</b>
+                            <div class="muted">BS Information Technology • On-the-Job Training</div>
+                        </div>
+                    </div>
+
+                    <div class="credits-names">
+                        <h3 class="credits-title">Developed by</h3>
+                        <ul class="name-list">
+                            <li>Jolinda Mae A. Silva</li>
+                            <li>Geraldine R. Nino</li>
+                            <li>Faithful John P. Ortega</li>
+                        </ul>
+                        <div class="muted small">
+                            ULLS – Urdaneta Library Log System
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <div>© {{ date.today().year }} Urdaneta City Library • ULLS</div>
+            <div style="opacity:.9;">Built for organized logging & reporting</div>
+        </div>
+    </footer>
+</body>
+
+</html>

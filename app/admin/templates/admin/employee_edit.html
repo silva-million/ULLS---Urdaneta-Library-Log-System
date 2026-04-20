@@ -1,0 +1,68 @@
+{% extends "admin/layout.html" %}
+{% set title = "Edit Employee" %}
+
+{% block content %}
+
+<div class="section-card">
+  <div class="section-head">
+    <div>
+      <h3>Edit Employee</h3>
+      <div class="emp-sub">Update employee, staff, or OJT details.</div>
+    </div>
+    <span class="badge">Record #{{ e.id }}</span>
+  </div>
+
+  <form method="post" class="emp-form modal-form">
+    <div class="f span-2">
+      <label>Employee ID</label>
+      <input class="inp" name="employee_id" value="{{ e.employee_id }}" required>
+    </div>
+
+    <div class="f">
+      <label>Surname</label>
+      <input class="inp" name="surname" value="{{ e.surname }}" required>
+    </div>
+
+    <div class="f">
+      <label>First Name</label>
+      <input class="inp" name="first_name" value="{{ e.first_name }}" required>
+    </div>
+
+    <div class="f span-2">
+      <label>Middle Name</label>
+      <input class="inp" name="middle_name" value="{{ e.middle_name or '' }}">
+    </div>
+
+    <div class="f">
+      <label>Birthday</label>
+      <input class="inp" type="date" name="birthday" value="{{ e.birthday.isoformat() if e.birthday else '' }}">
+    </div>
+
+    <div class="f">
+      <label>Position</label>
+      <input class="inp" name="position" value="{{ e.position or '' }}">
+    </div>
+
+    <div class="f span-2">
+      <label>Status</label>
+      <select class="inp" name="status">
+        <option value="active" {% if e.status == 'active' %}selected{% endif %}>Active</option>
+        <option value="away" {% if e.status == 'away' %}selected{% endif %}>Away</option>
+        <option value="on_leave" {% if e.status == 'on_leave' %}selected{% endif %}>On Leave</option>
+      </select>
+    </div>
+
+    <div class="modal-actions span-2">
+      <a class="btn btn-ghost" href="{{ url_for('admin.employees') }}">Cancel</a>
+      <button class="btn btn-primary" type="submit">Save Changes</button>
+    </div>
+  </form>
+
+  {% if error %}
+    <div class="flash-wrap" style="margin-top:12px;">
+      <div class="flash error">{{ error }}</div>
+    </div>
+  {% endif %}
+</div>
+
+{% endblock %}

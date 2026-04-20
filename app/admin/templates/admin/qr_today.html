@@ -1,0 +1,123 @@
+{% extends "admin/layout.html" %}
+{% set title = "Daily QR" %}
+
+{% block content %}
+
+<div class="qr-header">
+  <div>
+    <div class="qr-sub">Generate and share today's QR for employee scanning.</div>
+  </div>
+
+  <div class="qr-header-right">
+    <span class="qr-pill"><b>Date:</b> {{ day|mdY }}</span>
+
+    <form method="post" class="qr-form">
+      <button class="qr-btn" type="submit">Generate / Refresh</button>
+    </form>
+  </div>
+</div>
+
+<div class="qr-layout">
+  <!-- LEFT -->
+  <section class="qr-panel">
+    <div class="qr-panel-head">
+      <h3>QR Code</h3>
+      {% if token %}
+      <span class="qr-status ok">Active</span>
+      {% else %}
+      <span class="qr-status">Not Generated</span>
+      {% endif %}
+    </div>
+
+    {% if token %}
+    <div class="qr-preview">
+      <img class="qr-image" src="{{ url_for('admin.qr_image', token=token) }}" alt="QR Code">
+    </div>
+
+    <div class="qr-actions">
+      <a class="qr-linkbtn" href="{{ url_for('admin.qr_image', token=token) }}" target="_blank">Open Image</a>
+      <button class="qr-linkbtn" type="button" onclick="window.print()">Print</button>
+    </div>
+
+    <div class="qr-help">
+      Print and display this QR for today’s attendance scan.
+    </div>
+    {% else %}
+    <div class="qr-empty">
+      No QR generated yet. Click <b>Generate / Refresh</b>.
+    </div>
+    {% endif %}
+  </section>
+
+  <!-- RIGHT -->
+  <section class="qr-panel">
+    <div class="qr-panel-head">
+      <h3>Share Details</h3>
+      <span class="qr-status">Today</span>
+    </div>
+
+    {% if token %}
+    <div class="qr-row">
+      <div class="qr-row-label">Token</div>
+      <div class="qr-row-value">
+        <code id="tokenText">{{ token }}</code>
+        <button class="qr-copy" type="button" onclick="copyText('tokenText')">Copy</button>
+      </div>
+    </div>
+
+    <div class="qr-row">
+      <div class="qr-row-label">Scan URL</div>
+
+      <div class="qr-row-value qr-row-value-url">
+        <code id="urlText" class="qr-url">{{ scan_url }}</code>
+
+        <div class="qr-row-buttons">
+          <button class="qr-copy" type="button" onclick="copyText('urlText')">Copy</button>
+          <a class="qr-copy" href="{{ scan_url }}" target="_blank"
+            style="text-decoration:none; display:inline-flex; align-items:center;">Open</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="qr-tip">
+      If employees can’t scan, refresh the QR so the token updates.
+    </div>
+    {% else %}
+    <div class="qr-empty">
+      Generate a QR first to view token and scan URL.
+    </div>
+    {% endif %}
+  </section>
+</div>
+
+<!-- PRINT-ONLY QR SHEET -->
+<div class="print-sheet">
+  <div class="print-head">
+    <img src="{{ url_for('static', filename='img/library_logo.png') }}" alt="Library Logo" class="print-logo">
+    <div class="print-brand">
+      <div class="print-title">ULLS</div>
+      <div class="print-subtitle">Urdaneta Library Log System</div>
+      <div class="print-date">{{ day|mdY }}</div>
+    </div>
+  </div>
+
+  {% if token %}
+  <div class="print-qr-wrap">
+    <img class="print-qr" src="{{ url_for('admin.qr_image', token=token) }}" alt="QR Code">
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  function copyText(id) {
+    const el = document.getElementById(id);
+    const text = el.innerText || el.textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      // tiny feedback without alerts
+      const btns = document.querySelectorAll('.qr-copy');
+      // no-op (keep simple)
+    });
+  }
+</script>
+
+{% endblock %}

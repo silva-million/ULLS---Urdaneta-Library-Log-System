@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Visitor Log</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --c-accent: #FF4C2E;
+      --c-accent-2: #FDD013;
+      --c-bg: #EAF9FF;
+      --c-surface: rgba(255, 255, 255, 0.88);
+      --c-dark: #2148FF;
+      --c-green: #00FF05;
+      --txt: #10203A;
+      --txt-soft: rgba(16, 32, 58, 0.72);
+      --border: rgba(33, 72, 255, 0.18);
+      --shadow: 0 12px 26px rgba(10, 38, 120, 0.12);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Poppins", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--txt);
+      background:
+        radial-gradient(700px 300px at 80% 10%, rgba(0, 173, 241, 0.16), transparent 60%),
+        radial-gradient(500px 240px at 15% 15%, rgba(1, 255, 244, 0.16), transparent 60%),
+        linear-gradient(180deg, var(--c-bg), #fff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .shell {
+      width: min(720px, 100%);
+    }
+
+    .card {
+      background: var(--c-surface);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+
+    .head {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    .logo {
+      width: 82px;
+      height: 82px;
+      border-radius: 50%;
+      object-fit: cover;
+      display: block;
+      margin: 0 auto 12px;
+      border: 1px solid rgba(33, 72, 255, 0.16);
+      background: rgba(255,255,255,.7);
+      box-shadow: 0 10px 18px rgba(10, 38, 120, 0.08);
+    }
+
+    .head h1 {
+      margin: 0;
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--c-dark);
+    }
+
+    .sub {
+      margin-top: 6px;
+      font-size: 13px;
+      color: var(--txt-soft);
+      font-weight: 500;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .span-2 {
+      grid-column: 1 / -1;
+    }
+
+    .f label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--txt-soft);
+      margin-bottom: 6px;
+    }
+
+    .inp {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid rgba(33, 72, 255, 0.16);
+      border-radius: 12px;
+      padding: 11px 12px;
+      font-size: 13px;
+      outline: none;
+      color: var(--txt);
+      font-family: inherit;
+    }
+
+    .inp:focus {
+      border-color: rgba(0, 173, 241, 0.55);
+      box-shadow: 0 0 0 4px rgba(0, 173, 241, 0.14);
+    }
+
+    .actions {
+      margin-top: 16px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 11px 16px;
+      font-weight: 700;
+      font-size: 13px;
+      border: 1px solid rgba(33, 72, 255, 0.16);
+      background: rgba(255, 255, 255, 0.9);
+      color: var(--txt);
+      cursor: pointer;
+      text-decoration: none;
+      transition: 0.15s ease;
+      box-shadow: 0 6px 14px rgba(10, 38, 120, 0.05);
+      font-family: inherit;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      background: rgba(0, 173, 241, 0.1);
+    }
+
+    .btn-primary {
+      background: #2148FF;
+      border-color: rgba(33, 72, 255, 0.3);
+      color: #fff;
+      box-shadow: 0 12px 18px rgba(33, 72, 255, 0.22);
+    }
+
+    .btn-primary:hover {
+      background: #1939d8;
+    }
+
+    .flash {
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+
+    .flash.success {
+      background: rgba(0, 255, 5, .12);
+      border: 1px solid rgba(0, 255, 5, .35);
+      color: #116611;
+    }
+
+    .flash.error {
+      background: rgba(255, 0, 0, .10);
+      border: 1px solid rgba(255, 0, 0, .25);
+      color: #991b1b;
+    }
+
+    @media (max-width: 640px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .span-2 {
+        grid-column: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="card">
+      <div class="head">
+        <img class="logo" src="{{ url_for('static', filename='img/library_logo.png') }}" alt="Library Logo">
+        <h1>Visitor Log</h1>
+        <div class="sub">Please fill out the required details before entering.</div>
+      </div>
+
+      {% if msg %}
+        <div class="flash success">{{ msg }}</div>
+      {% endif %}
+      {% if error %}
+        <div class="flash error">{{ error }}</div>
+      {% endif %}
+
+      <form method="post" class="form-grid">
+        <div class="f span-2">
+          <label>Full Name</label>
+          <input class="inp" name="full_name" required>
+        </div>
+
+        <div class="f">
+          <label>Gender</label>
+          <select class="inp" name="gender" required>
+            <option value="">Select Gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div class="f">
+          <label>Age</label>
+          <input class="inp" name="age" type="number" min="0" max="120" required>
+        </div>
+
+        <div class="f span-2">
+          <label>Purpose of Visit</label>
+          <input class="inp" name="purpose" placeholder="e.g. Research, Reading, Inquiry">
+        </div>
+
+        <div class="f span-2">
+          <label>Address / Institution</label>
+          <input class="inp" name="address_institution" placeholder="e.g. Urdaneta City / PSU Urdaneta Campus">
+        </div>
+
+        <div class="actions span-2">
+          <button class="btn btn-primary" type="submit">Log Visitor</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,269 @@
+{% extends "admin/layout.html" %}
+{% set title = "Attendance" %}
+
+{% block head_extra %}
+<script>
+  setInterval(() => {
+    if (!window.location.hash || window.location.hash !== "#att-modal") {
+      window.location.reload();
+    }
+  }, 10000);
+</script>
+{% endblock %}
+
+{% block content %}
+<div id="att-page"></div>
+<div class="att-header">
+  <div>
+    <div class="att-sub">Manage and monitor daily attendance records.</div>
+  </div>
+
+  <div class="att-actions">
+    <span class="page-meta"><b>Auto refresh:</b> 10s</span>
+    <a class="btn btn-primary" href="#att-modal">+ Add / Update</a>
+    <a class="btn btn-soft" href="#export-modal">Export PDF</a>
+  </div>
+</div>
+
+<div class="att-layout">
+  <!-- LEFT: REAL CALENDAR -->
+  <div class="att-calendar-card">
+    <div class="calendar-top">
+      <a class="btn btn-ghost btn-mini"
+        href="{{ url_for('admin.attendance', view_month=prev_month.strftime('%Y-%m'), day=selected_day.strftime('%Y-%m-%d') if selected_day else '') }}">
+        ‹
+      </a>
+
+      <div class="calendar-title">
+        {{ calendar_anchor.strftime("%B %Y") }}
+      </div>
+
+      <a class="btn btn-ghost btn-mini"
+        href="{{ url_for('admin.attendance', view_month=next_month.strftime('%Y-%m'), day=selected_day.strftime('%Y-%m-%d') if selected_day else '') }}">
+        ›
+      </a>
+    </div>
+
+    <div class="calendar-weekdays">
+      <div>Sun</div>
+      <div>Mon</div>
+      <div>Tue</div>
+      <div>Wed</div>
+      <div>Thu</div>
+      <div>Fri</div>
+      <div>Sat</div>
+    </div>
+
+    <div class="calendar-grid">
+      {% for week in month_matrix %}
+      {% for d in week %}
+      {% set is_current_month = d.month == calendar_anchor.month %}
+      {% set is_selected = selected_day and d == selected_day %}
+      {% set has_record = d in record_days %}
+
+      <a href="{{ url_for('admin.attendance', day=d.strftime('%Y-%m-%d'), view_month=calendar_anchor.strftime('%Y-%m')) }}"
+        class="calendar-cell
+              {% if not is_current_month %}is-other-month{% endif %}
+              {% if is_selected %}is-selected{% endif %}
+              {% if has_record %}has-record{% endif %}
+            ">
+        <span class="day-num">{{ d.day }}</span>
+        {% if has_record %}
+        <span class="day-dot"></span>
+        {% endif %}
+      </a>
+      {% endfor %}
+      {% endfor %}
+    </div>
+
+    <div class="calendar-legend">
+      <span><i class="legend-dot"></i> With attendance</span>
+    </div>
+  </div>
+
+  <!-- RIGHT: DAILY TABLE -->
+  <div class="att-results-card">
+    <div class="section-head">
+      <h3>{{ selected_day.strftime("%B %d, %Y") if selected_day else "No day selected" }}</h3>
+      <div class="att-summary">
+        <span class="badge">Present: {{ selected_present }}</span>
+        <span class="badge">Late: {{ selected_late }}</span>
+        <span class="badge">OT: {{ selected_ot }}</span>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="table att-table">
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>AM In</th>
+            <th>Lunch Out</th>
+            <th>Lunch In</th>
+            <th>PM Out</th>
+            <th class="text-right">Total</th>
+            <th class="text-right">OT</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in selected_records %}
+          <tr>
+            <td><b>{{ r.employee.surname }}</b>, {{ r.employee.first_name }}</td>
+            <td>{{ r.am_in.strftime("%I:%M %p") if r.am_in else "-" }}</td>
+            <td>{{ r.lunch_out.strftime("%I:%M %p") if r.lunch_out else "-" }}</td>
+            <td>{{ r.lunch_in.strftime("%I:%M %p") if r.lunch_in else "-" }}</td>
+            <td>{{ r.pm_out.strftime("%I:%M %p") if r.pm_out else "-" }}</td>
+            <td class="text-right">{{ "%.2f"|format(r.total_minutes/60) }}</td>
+            <td class="text-right">{{ "%.2f"|format(r.overtime_minutes/60) }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" class="center">No attendance records for this day.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal" id="att-modal" aria-hidden="true">
+  <a class="modal-backdrop" href="#att-page" aria-label="Close"></a>
+
+  <div class="modal-card modal-wide" role="dialog" aria-modal="true" aria-labelledby="attModalTitle">
+    <div class="modal-head">
+      <div>
+        <h3 id="attModalTitle">Add / Update Attendance</h3>
+        <div class="modal-sub">Fill the fields you want to update, then save.</div>
+      </div>
+      <a class="modal-close" href="#att-page" aria-label="Close">×</a>
+    </div>
+
+    <form method="post" class="att-modal-form">
+      <div class="f span-2">
+        <label>Employee</label>
+        <select class="inp" name="employee_id" required>
+          <option value="">-- select --</option>
+          {% for e in employees %}
+          <option value="{{ e.id }}">{{ e.surname }}, {{ e.first_name }} ({{ e.employee_id }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="f">
+        <label>Date</label>
+        <input class="inp" type="date" name="day"
+          value="{{ selected_day.strftime('%Y-%m-%d') if selected_day else '' }}" required>
+      </div>
+
+      <div class="f">
+        <label>AM In</label>
+        <input class="inp" type="time" name="am_in">
+      </div>
+
+      <div class="f">
+        <label>Lunch Out</label>
+        <input class="inp" type="time" name="lunch_out">
+      </div>
+
+      <div class="f">
+        <label>Lunch In</label>
+        <input class="inp" type="time" name="lunch_in">
+      </div>
+
+      <div class="f">
+        <label>PM Out</label>
+        <input class="inp" type="time" name="pm_out">
+      </div>
+
+      <div class="modal-actions">
+        <a class="btn btn-ghost" href="#att-page">Cancel</a>
+        <button class="btn btn-primary" type="submit">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal" id="export-modal" aria-hidden="true">
+  <a class="modal-backdrop" href="#att-page" aria-label="Close"></a>
+
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="exportModalTitle">
+    <div class="modal-head">
+      <div>
+        <h3 id="exportModalTitle">Export Attendance PDF</h3>
+        <div class="modal-sub">Choose an export type, then fill only the needed field.</div>
+      </div>
+      <a class="modal-close" href="#att-page" aria-label="Close">×</a>
+    </div>
+
+    <form method="get" action="{{ url_for('admin.attendance_export_pdf') }}" class="emp-form modal-form" id="exportForm">
+      <div class="f span-2">
+        <label>Export Type</label>
+        <select class="inp" name="export_type" id="exportType" onchange="toggleExportFields()" required>
+          <option value="day">Selected Day</option>
+          <option value="month">Month</option>
+          <option value="range">Date Range</option>
+          <option value="year">Year</option>
+        </select>
+      </div>
+
+      <div class="f span-2 export-field export-day">
+        <label>Selected Day</label>
+        <input class="inp" type="date" name="day"
+               value="{{ selected_day.strftime('%Y-%m-%d') if selected_day else '' }}">
+      </div>
+
+      <div class="f span-2 export-field export-month" style="display:none;">
+        <label>Month</label>
+        <input class="inp" type="month" name="month"
+               value="{{ calendar_anchor.strftime('%Y-%m') if calendar_anchor else '' }}">
+      </div>
+
+      <div class="f export-field export-range" style="display:none;">
+        <label>From</label>
+        <input class="inp" type="date" name="from">
+      </div>
+
+      <div class="f export-field export-range" style="display:none;">
+        <label>To</label>
+        <input class="inp" type="date" name="to">
+      </div>
+
+      <div class="f span-2 export-field export-year" style="display:none;">
+        <label>Year</label>
+        <input class="inp" type="number" name="year" min="2000" max="2100" placeholder="2026">
+      </div>
+
+      <div class="modal-actions span-2">
+        <a class="btn btn-ghost" href="#att-page">Cancel</a>
+        <button class="btn btn-primary" type="submit">Export PDF</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function toggleExportFields() {
+    const type = document.getElementById('exportType').value;
+    document.querySelectorAll('.export-field').forEach(el => {
+      el.style.display = 'none';
+    });
+
+    if (type === 'day') {
+      document.querySelector('.export-day').style.display = 'block';
+    } else if (type === 'month') {
+      document.querySelector('.export-month').style.display = 'block';
+    } else if (type === 'range') {
+      document.querySelectorAll('.export-range').forEach(el => {
+        el.style.display = 'block';
+      });
+    } else if (type === 'year') {
+      document.querySelector('.export-year').style.display = 'block';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', toggleExportFields);
+</script>
+
+{% endblock %}

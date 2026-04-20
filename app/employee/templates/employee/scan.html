@@ -1,0 +1,33 @@
+{% extends "employee/layout.html" %}
+{% set title = "Scan Attendance" %}
+
+{% block content %}
+<div class="section-card scan-card">
+  <div class="section-head">
+    <div>
+      <h3>Attendance Scan</h3>
+      <div class="sub">Enter your employee ID to record today’s attendance.</div>
+    </div>
+  </div>
+
+  {% if error %}
+    <div class="flash error">{{ error }}</div>
+  {% endif %}
+  {% if msg %}
+    <div class="flash success">{{ msg }}</div>
+  {% endif %}
+
+  {% if ok %}
+    <form method="post">
+      <input type="hidden" name="token" value="{{ token }}">
+
+      <div class="f" style="margin-bottom:12px;">
+        <label>Employee ID</label>
+        <input class="inp" name="employee_id" placeholder="e.g. 2024-001" required>
+      </div>
+
+      <button class="btn btn-primary" type="submit">Submit Attendance</button>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}

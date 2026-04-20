@@ -1,0 +1,227 @@
+{% extends "admin/layout.html" %}
+{% set title = "Visitor Log" %}
+
+{% block head_extra %}
+<meta http-equiv="refresh" content="10">
+{% endblock %}
+
+{% block content %}
+<div id="visitors-page"></div>
+
+<div class="att-header">
+  <div>
+    <div class="att-sub">Monitor daily visitor records and export reports.</div>
+  </div>
+
+  <div class="att-actions">
+    <span class="page-meta"><b>Auto refresh:</b> 10s</span>
+    <a class="btn btn-soft" href="#visitor-export-modal">Export PDF</a>
+  </div>
+</div>
+
+{% if error %}
+<div class="flash-wrap">
+  <div class="flash error">{{ error }}</div>
+</div>
+{% endif %}
+
+<div class="att-layout">
+  <!-- LEFT: CALENDAR -->
+  <div class="att-calendar-card">
+    <div class="calendar-top">
+      <a class="btn btn-ghost btn-mini"
+        href="{{ url_for('admin.visitors', view_month=prev_month.strftime('%Y-%m'), day=selected_day.strftime('%Y-%m-%d') if selected_day else '') }}">
+        ‹
+      </a>
+
+      <div class="calendar-title">
+        {{ calendar_anchor.strftime("%B %Y") }}
+      </div>
+
+      <a class="btn btn-ghost btn-mini"
+        href="{{ url_for('admin.visitors', view_month=next_month.strftime('%Y-%m'), day=selected_day.strftime('%Y-%m-%d') if selected_day else '') }}">
+        ›
+      </a>
+    </div>
+
+    <div class="calendar-weekdays">
+      <div>Sun</div>
+      <div>Mon</div>
+      <div>Tue</div>
+      <div>Wed</div>
+      <div>Thu</div>
+      <div>Fri</div>
+      <div>Sat</div>
+    </div>
+
+    <div class="calendar-grid">
+      {% for week in month_matrix %}
+      {% for d in week %}
+      {% set is_current_month = d.month == calendar_anchor.month %}
+      {% set is_selected = selected_day and d == selected_day %}
+      {% set has_record = d in record_days %}
+
+      <a href="{{ url_for('admin.visitors', day=d.strftime('%Y-%m-%d'), view_month=calendar_anchor.strftime('%Y-%m')) }}"
+        class="calendar-cell
+               {% if not is_current_month %}is-other-month{% endif %}
+               {% if is_selected %}is-selected{% endif %}
+               {% if has_record %}has-record{% endif %}">
+        <span class="day-num">{{ d.day }}</span>
+        {% if has_record %}
+        <span class="day-dot"></span>
+        {% endif %}
+      </a>
+      {% endfor %}
+      {% endfor %}
+    </div>
+
+    <div class="calendar-legend">
+      <span><i class="legend-dot"></i> With visitor records</span>
+    </div>
+
+    <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+      <a class="btn btn-soft btn-mini" href="{{ url_for('admin.visitors', range='today') }}">Today</a>
+      <a class="btn btn-soft btn-mini" href="{{ url_for('admin.visitors', range='week') }}">This Week</a>
+      <a class="btn btn-soft btn-mini" href="{{ url_for('admin.visitors', range='month') }}">This Month</a>
+    </div>
+  </div>
+
+  <!-- RIGHT: DAILY VISITOR TABLE -->
+  <div class="att-results-card">
+    <div class="section-head">
+      <h3>{{ selected_day.strftime("%B %d, %Y") if selected_day else "No day selected" }}</h3>
+      <div class="att-summary">
+        <span class="badge">Visitors: {{ selected_visitors|length }}</span>
+        <span class="badge">Timed Out: {{ selected_timed_out }}</span>
+        <span class="badge">Active: {{ selected_active }}</span>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="table visitor-table">
+        <thead>
+          <tr>
+            <th style="width:200px;">Name</th>
+            <th>Gender</th>
+            <th>Age</th>
+            <th style="width:160px;">Address / Institution</th>
+            <th>Purpose</th>
+            <th style="width:120px;">Time In</th>
+            <th style="width:120px;">Time Out</th>
+            <th style="width:160px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for v in selected_visitors %}
+          <tr>
+            <td style="font-weight:700;">{{ v.full_name }}</td>
+            <td>{{ v.gender or "—" }}</td>
+            <td>{{ v.age or "—" }}</td>
+            <td>{{ v.address_institution or "—" }}</td>
+            <td>{{ v.purpose or "—" }}</td>
+            <td>{{ v.time_in.strftime("%I:%M %p") if v.time_in else "—" }}</td>
+            <td>{{ v.time_out.strftime("%I:%M %p") if v.time_out else "—" }}</td>
+            <td class="action-row">
+              {% if not v.time_out %}
+              <form method="post" action="{{ url_for('admin.visitor_timeout', visitor_id=v.id) }}" class="inline">
+                <button class="btn btn-mini btn-warn" type="submit">Time Out</button>
+              </form>
+              {% else %}
+              <span class="chip chip-ok">Done</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="8" class="center">No visitor records for this day.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="modal" id="visitor-export-modal" aria-hidden="true">
+  <a class="modal-backdrop" href="#visitors-page" aria-label="Close"></a>
+
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="visitorExportModalTitle">
+    <div class="modal-head">
+      <div>
+        <h3 id="visitorExportModalTitle">Export Visitor Log PDF</h3>
+        <div class="modal-sub">Choose one export type only.</div>
+      </div>
+      <a class="modal-close" href="#visitors-page" aria-label="Close">×</a>
+    </div>
+
+    <form method="get" action="{{ url_for('admin.visitors_export_pdf') }}" class="emp-form modal-form">
+      <div class="f span-2">
+        <label>Export Type</label>
+        <select class="inp" name="export_type" id="visitorExportType" onchange="toggleVisitorExportFields()" required>
+          <option value="day">Selected Day</option>
+          <option value="month">Month</option>
+          <option value="range">Date Range</option>
+          <option value="year">Year</option>
+        </select>
+      </div>
+
+      <div class="f span-2 visitor-export-field visitor-export-day">
+        <label>Selected Day</label>
+        <input class="inp" type="date" name="day"
+          value="{{ selected_day.strftime('%Y-%m-%d') if selected_day else '' }}">
+      </div>
+
+      <div class="f span-2 visitor-export-field visitor-export-month" style="display:none;">
+        <label>Month</label>
+        <input class="inp" type="month" name="month"
+          value="{{ calendar_anchor.strftime('%Y-%m') if calendar_anchor else '' }}">
+      </div>
+
+      <div class="f visitor-export-field visitor-export-range" style="display:none;">
+        <label>From</label>
+        <input class="inp" type="date" name="from">
+      </div>
+
+      <div class="f visitor-export-field visitor-export-range" style="display:none;">
+        <label>To</label>
+        <input class="inp" type="date" name="to">
+      </div>
+
+      <div class="f span-2 visitor-export-field visitor-export-year" style="display:none;">
+        <label>Year</label>
+        <input class="inp" type="number" name="year" min="2000" max="2100" placeholder="2026">
+      </div>
+
+      <div class="modal-actions span-2">
+        <a class="btn btn-ghost" href="#visitors-page">Cancel</a>
+        <button class="btn btn-primary" type="submit">Export PDF</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function toggleVisitorExportFields() {
+    const type = document.getElementById('visitorExportType').value;
+    document.querySelectorAll('.visitor-export-field').forEach(el => {
+      el.style.display = 'none';
+    });
+
+    if (type === 'day') {
+      document.querySelector('.visitor-export-day').style.display = 'block';
+    } else if (type === 'month') {
+      document.querySelector('.visitor-export-month').style.display = 'block';
+    } else if (type === 'range') {
+      document.querySelectorAll('.visitor-export-range').forEach(el => {
+        el.style.display = 'block';
+      });
+    } else if (type === 'year') {
+      document.querySelector('.visitor-export-year').style.display = 'block';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', toggleVisitorExportFields);
+</script>
+
+{% endblock %}

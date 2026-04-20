@@ -1,0 +1,93 @@
+{% extends "admin/layout.html" %}
+{% set title = "Monthly Visitor Report" %}
+
+{% block content %}
+
+<div class="section-card att-top">
+  <div class="section-head">
+    <h3>Monthly Visitor Report</h3>
+    <span class="badge">{{ total }} record{{ '' if total == 1 else 's' }}</span>
+  </div>
+
+  <form method="get" class="att-filter-compact" style="grid-template-columns: 1fr auto;">
+    <div class="f">
+      <label>Month</label>
+      <input class="inp" type="month" name="month" value="{{ month or '' }}" required>
+    </div>
+
+    <div class="f">
+      <label>&nbsp;</label>
+      <button class="btn btn-primary" type="submit">Show</button>
+    </div>
+
+    <div class="att-filter-actions" style="grid-column:1/-1; justify-content:flex-end;">
+      <button class="btn btn-soft"
+              type="submit"
+              formaction="{{ url_for('admin.visitors_monthly_report_export_excel') }}"
+              formmethod="get">
+        Export Excel
+      </button>
+
+      <button class="btn btn-soft"
+              type="submit"
+              formaction="{{ url_for('admin.visitors_monthly_report_export_pdf') }}"
+              formmethod="get">
+        Export PDF
+      </button>
+
+      <a class="btn btn-ghost" href="{{ url_for('admin.visitors') }}">← Back to Visitors</a>
+    </div>
+  </form>
+
+  <div class="emp-sub" style="margin-top:10px;">
+    Select a month, click Show, then export. Export uses the same month automatically.
+  </div>
+</div>
+
+<div class="section-card">
+  <div class="section-head">
+    <h3>Results</h3>
+    <span class="badge">Monthly records</span>
+  </div>
+
+  <div class="table-wrap">
+    <table class="table emp-table">
+      <thead>
+        <tr>
+          <th style="width:70px;">ID</th>
+          <th>Name</th>
+          <th style="width:90px;">Gender</th>
+          <th style="width:70px;">Age</th>
+          <th>Contact</th>
+          <th>Purpose</th>
+          <th style="width:170px;">Time In</th>
+          <th style="width:170px;">Time Out</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if rows %}
+          {% for v in rows %}
+            <tr>
+              <td><span class="mono">{{ v.id }}</span></td>
+              <td style="font-weight:800;">{{ v.full_name }}</td>
+              <td>{{ v.gender or "—" }}</td>
+              <td>{{ v.age if v.age is not none else "—" }}</td>
+              <td>{{ v.contact or "—" }}</td>
+              <td>{{ v.purpose or "—" }}</td>
+              <td style="white-space:nowrap;">{{ v.time_in.strftime("%b %d, %Y %I:%M %p") if v.time_in else "—" }}</td>
+              <td style="white-space:nowrap;">{{ v.time_out.strftime("%b %d, %Y %I:%M %p") if v.time_out else "—" }}</td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="8" class="center" style="padding:14px; font-weight:700; color:rgba(0,0,0,.60);">
+              Select a month to view records.
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
